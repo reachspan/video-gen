@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+"""Download Instagram reels/posts. Stdlib only. Prints one saved path per line."""
+import argparse, http.cookiejar as cj, json, os, re, sys, urllib.parse, urllib.request
+
+UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+APP_ID = "936619743392459"
+# Instagram rotates these; first match with non-null data wins.
+DOC_IDS = ["10015901848480474", "8845758582119845", "9510064595728286"]
+
+
+def opener(cookiefile=None):
+    jar = cj.MozillaCookieJar()
+    if cookiefile:
+        jar.load(cookiefile, ignore_discard=True, ignore_expires=True)
+    op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+    op.addheaders = [("User-Agent", UA), ("Accept-Language", "en-US,en;q=0.9")]
+    if not any(c.name == "csrftoken" for c in jar):
+        op.open("https://www.instagram.com/", timeout=30).read()  # bootstrap csrftoken/mid
+    return op, {c.name: c.value for c in jar}.get("csrftoken", "")
+
+
+def shortcode(u):
+    m = re.search(r"(?:/(?:p|reels?|tv)/)([A-Za-z0-9_-]+)", u)
+    if m:
+        return m.group(1)
+    if re.fullmatch(r"[A-Za-z0-9_-]{5,}", u):
+        return u
+    sys.exit(f"cannot parse shortcode: {u}")
+
+
+def fetch(op, csrf, sc):
+    for doc in DOC_IDS:
+        body = urllib.parse.urlencode(
+            {"variables": json.dumps({"shortcode": sc}), "doc_id": doc}).encode()
+        req = urllib.request.Request(
+            "https://www.instagram.com/graphql/query", data=body,
+            headers={"User-Agent": UA, "X-IG-App-ID": APP_ID, "X-CSRFToken": csrf,
+                     "Content-Type": "application/x-www-form-urlencoded",
+                     "Referer": f"https://www.instagram.com/p/{sc}/"})
+        try:
+            d = json.load(op.open(req, timeout=30)).get("data")
+        except Exception:
+            continue
+        if d and d.get("xdt_shortcode_media"):
+            return d["xdt_shortcode_media"]
+    sys.exit(f"{sc}: no data (post private/removed, or all doc_ids stale — "
+             f"retry with --cookies for a logged-in session)")
+
+
+def items(m):
+    """Yield (url, ext) for the post: sidecar children or the single node."""
+    kids = m.get("edge_sidecar_to_children")
+    nodes = [e["node"] for e in kids["edges"]] if kids else [m]
+    for n in nodes:
+        if n.get("is_video") and n.get("video_url"):
+            yield n["video_url"], "mp4"
+        elif n.get("display_url"):
+            yield n["display_url"], "jpg"
+
+
+def save(op, url, path):
+    with op.open(urllib.request.Request(url, headers={"User-Agent": UA}), timeout=60) as r, \
+            open(path, "wb") as f:
+        while chunk := r.read(1 << 16):
+            f.write(chunk)
+    return path
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Download Instagram reels/posts.")
+    ap.add_argument("urls", nargs="+", help="post/reel URL or bare shortcode")
+    ap.add_argument("-o", "--out", default=".", help="output dir (default: .)")
+    ap.add_argument("--cookies", help="Netscape cookie file (for private/age-gated posts)")
+    ap.add_argument("--json", action="store_true", help="emit metadata JSON to stderr")
+    a = ap.parse_args()
+
+    os.makedirs(a.out, exist_ok=True)
+    op, csrf = opener(a.cookies)
+    rc = 0
+    for u in a.urls:
+        sc = shortcode(u)
+        try:
+            m = fetch(op, csrf, sc)
+            got = list(items(m))
+            for i, (url, ext) in enumerate(got):
+                name = f"{sc}.{ext}" if len(got) == 1 else f"{sc}_{i + 1}.{ext}"
+                print(save(op, url, os.path.join(a.out, name)), flush=True)
+            if a.json:
+                cap = m.get("edge_media_to_caption", {}).get("edges") or []
+                json.dump({"shortcode": sc, "owner": m.get("owner", {}).get("username"),
+                           "caption": cap[0]["node"]["text"] if cap else None,
+                           "duration": m.get("video_duration"),
+                           "views": m.get("video_play_count") or m.get("video_view_count"),
+                           "taken_at": m.get("taken_at_timestamp"), "files": len(got)},
+                          sys.stderr, ensure_ascii=False)
+                sys.stderr.write("\n")
+        except SystemExit as e:
+            print(e, file=sys.stderr); rc = 1
+        except Exception as e:
+            print(f"{sc}: {e}", file=sys.stderr); rc = 1
+    return rc
+
+
+if __name__ == "__main__":
+    sys.exit(main())
