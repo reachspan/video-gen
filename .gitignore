@@ -1,0 +1,10 @@
+# Vendored agent skills — restorable from skills-lock.json
+.agents/
+.claude/
+
+# Downloads
+*.mp4
+*.jpg
+
+__pycache__/
+*.pyc
