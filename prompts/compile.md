@@ -71,7 +71,7 @@ Also record:
 - `composition.shot_size`, `subject_share`, `composition.forbidden` — note *why* a
   forbidden framing breaks it, not just that it does.
 - `must_be_true` — statements a naive viewer should be able to confirm from the
-  finished clip. These are what the blind judges in `judge.md` are checking.
+  finished clip. These are what the blind readers in `judge.md` are checking.
 - `forbidden_assertions` — sentences the prompt must never contain.
 
 ### A trap in `forbidden_assertions`

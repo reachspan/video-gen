@@ -38,8 +38,11 @@ page load and prepend it to `DOC_IDS`.
 2. **Check the prompt** against the spec before spending anything — free, and it
    catches the mistakes that would otherwise cost a whole generation.
 3. **Generate.**
-4. **Sweep and judge** the result: measurements point at where to look, then agents
-   inspect the clip in parallel and return a ship / do-not-ship call with reasons.
+4. **Judge** the result, meaning first: agents who have not been told what the shot
+   was supposed to be watch it blind alongside the original and say what they think
+   it is. Only a clip that still means something gets the frame-by-frame sweep, where
+   measurements point at where to look and agents inspect every region in parallel.
+   Out comes a ship / do-not-ship call with reasons.
 5. **Fix** — a signal mismatch is corrected locally for free, a bad span is
    regenerated on its own, and only a broken premise needs starting over.
 
@@ -54,8 +57,8 @@ degrade toward the end, so it is normal to generate longer than needed and trim.
 No measurement here can tell you whether a clip is real or generated — real footage
 varies more between cameras and shooting styles than generated footage differs from
 real. The measurements say where a result departs from its reference; the judgement
-is made by looking. `docs/pitfalls.md` lists what tends to go wrong and how each gets
-checked.
+is made by looking. `docs/pitfalls.md` catalogues what tends to go wrong, from a lost
+premise down to a garbled logo.
 
 ## Setup
 

@@ -223,7 +223,7 @@ def plan(path, ref=None):
     n = count(path)
     p = probe(path)
     idx = spread(n, 3)
-    out = [f"# Minesweep — {os.path.basename(path)}",
+    out = [f"# Sweep plan — {os.path.basename(path)}",
            "",
            f"{n} frames at {p['fps']:.2f} fps ({n / p['fps']:.1f}s). "
            f"Tile grid {ROWS}x{COLS} at {ZOOM}x. Sampled frames: {idx}.",
@@ -234,19 +234,51 @@ def plan(path, ref=None):
            "",
            "Coverage: the strips include every frame; the tiles include every "
            "pixel of each sampled frame, plus each tile at its own worst moment, "
-           "found by scanning all frames (`odd_*`). Work the list in order and "
-           "record a verdict for each, including the ones you cleared - an item "
-           "with no verdict has not been swept.",
+           "found by scanning all frames (`odd_*`).",
            "",
            "| id | pitfall | signal | how to sweep it |",
            "|---|---|---|---|"]
     for pid, name, sig, how in PLAN:
         out.append(f"| `{pid}` | {name} | {sig} | {how} |")
     out += ["",
-            "Metrics only point. Every verdict here is made by looking; a metric "
+            "## Rules for every package",
+            "",
+            "1. Work your list in order and record a verdict for EVERY id in it, "
+            "including the ones you cleared. An id with no verdict has not been "
+            "swept, and that is the difference between an exhaustive pass and an "
+            "opportunistic one.",
+            "2. Three outcomes only - `defect`, `clear`, `cannot_tell`. The third "
+            "is a real answer and it is expected; reporting it is what keeps "
+            "`clear` honest. Anything you cannot resolve at 4x is `cannot_tell`, "
+            "never `clear`.",
+            "3. Open the tiles as written. They are already at 4x; re-cropping "
+            "the full frame reintroduces the downscaling this sweep exists to "
+            "avoid, and a whole-frame view invents defects as readily as it "
+            "hides them. For anything smaller than a hand, confirm it in the "
+            "tile before reporting it.",
+            "4. Start at the final sampled frame of your region and work "
+            "backwards. Degradation is end-loaded, so the tail is where a defect "
+            "is most likely to be waiting.",
+            "5. Read the strips before the tiles, and read both against the "
+            "reference's. They are cheap and cover the whole duration, so they "
+            "say where in time to spend the expensive attention - and a static "
+            "background draws straight lines legitimately, so 'straight' means "
+            "something only next to a clip where it wavers.",
+            "6. Metrics only point. Every verdict is made by looking; a metric "
             "that fires is a place to look, and a metric that stays quiet is not "
-            "a pass. Anything you cannot resolve at 4x is 'cannot tell', never "
-            "'fine'.",
+            "a pass.",
+            "7. If a sub-test inside a pitfall has nothing to bite on - "
+            "counter-rotation when the head never turns, a breathing rate on a "
+            "clip too short to hold two cycles - record that sub-test as not "
+            "applicable and judge on the rest. Do not return `cannot_tell` for a "
+            "whole pitfall because one of its checks was inapplicable.",
+            "",
+            "Return JSON: {package, findings: [{pitfall, verdict: "
+            "defect|clear|cannot_tell, where: [{frame, tile_or_box}], evidence, "
+            "severity_1_5}]}. `where` is a list, so a pitfall recurring across "
+            "tiles or frames records each occurrence; every entry carries a "
+            "frame number and a tile or pixel box, so a finding can be re-opened "
+            "by someone who did not make it.",
             "",
             "## Work packages",
             "",
@@ -258,10 +290,6 @@ def plan(path, ref=None):
             "|---|---|---|"]
     for name, ids, ev in PACKAGES:
         out.append(f"| `{name}` | {' '.join(ids)} | {ev} |")
-    out += ["",
-            "Each returns JSON: {package, findings: [{pitfall, verdict: "
-            "defect|clear|cannot_tell, where, evidence, severity_1_5}]}, with an "
-            "entry for EVERY pitfall in the package."]
     return "\n".join(out)
 
 
