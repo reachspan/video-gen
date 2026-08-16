@@ -7,22 +7,15 @@ What it consumes, and what each of those does NOT do:
 
 | file | job | does NOT |
 |---|---|---|
-| `tools/gate.py` | prompt vs intent, before generating | look at pixels |
 | `tools/vq.py` | signal measurement against a reference | decide anything |
 | `tools/sweep.py` | build inspection artifacts, emit the checklist | judge them |
 | `docs/pitfalls.md` | catalogue of what goes wrong in this format | say how to sweep |
 | `docs/minesweep.md` | how to read the artifacts, and why they cover the clip | list pitfalls |
 
-`AGENT.md` routes between this and the other procedures. Nothing but this file
-decides whether a clip ships.
+Everything here runs on a clip that already exists. Nothing but this file decides
+whether one ships.
 
 ---
-
-## Stage 0 — before spending credits
-
-    python tools/gate.py targets/X.intent.json targets/X.v<n>.txt
-
-A prompt that fails the gate is not worth generating. Nothing below applies yet.
 
 ## Stage 1 — build the evidence
 
@@ -207,10 +200,11 @@ establish, the set dressing has failed regardless of the issue list.
 Collect every package and every judge into one table: pitfall or judge, verdict,
 where, severity. Then:
 
-- **Any `defect` at severity 4+, or any failed judge** → do not ship. A semantic
-  failure (J1, J3) is a prompt problem: revise the spec via `compile.md` and
-  regenerate whole. A signal mismatch is `post.py` and costs nothing. A defect that
-  occupies part of the runtime and leaves the rest usable is `surgery.md`.
+- **Any `defect` at severity 4+, or any failed judge** → do not ship. Say which
+  class of fix it needs: a semantic failure (J1, J3) is a prompt problem and needs
+  the spec revised and the shot regenerated whole; a signal mismatch is `post.py`
+  and costs nothing; a defect that occupies part of the runtime and leaves the rest
+  usable is `surgery.md`.
 - **`cannot_tell` on a severity-4-capable pitfall** → resolve it before deciding.
   Re-crop tighter, or say plainly in the report that it went unresolved.
 - **Everything else clear** → ship, and record what was swept.
