@@ -17,9 +17,11 @@ noise_luma_slope is worth knowing about: it is near-constant per camera, so it
 tests whether two clips share a capture pipeline rather than whether either is
 real.
 
-The noise metrics track BITRATE as much as content - the same clip transcoded from
-6993 to 651 kbps drops noise_sigma_flat by a quarter. Compare them only between
-clips encoded at similar rates; measure prints a note when they are not.
+Grain MAGNITUDE is not measured here. It tracks the encoder rather than the
+content - the same clip transcoded from 6993 to 651 kbps loses a quarter of it -
+so it says nothing about generation quality. noise_by_luma carries the same
+dependence and is context for the slope, not a number to compare across bitrates;
+the slope itself is normalised and shifts only ~10% over that range.
 
 Measures nothing at platform bitrates, do not re-add: lateral chromatic
 aberration, grain advection, raw temporal residual correlation, vignetting.
@@ -101,7 +103,6 @@ def measure(path):
     res = Y - ndimage.gaussian_filter(Y, (0, 1, 1))
     grad = ndimage.gaussian_gradient_magnitude(Y, (0, 1.5, 1.5))
     mad = lambda x: float(1.4826 * np.median(np.abs(x - np.median(x)))) if x.size else 0.0
-    m["noise_sigma_flat"] = round(mad(res[grad < np.percentile(grad, 40)]), 4)
 
     prof = []
     for lo, hi in ((0, 64), (64, 128), (128, 192), (192, 256)):
@@ -299,7 +300,7 @@ def measure(path):
     return m
 
 
-KEYS = ["fps", "kbps", "gop", "noise_sigma_flat", "noise_luma_slope", "clip_high_pct",
+KEYS = ["fps", "kbps", "gop", "noise_luma_slope", "clip_high_pct",
         "clip_low_pct", "displacement_px", "motion_mean", "ssim_min",
         "subject_stillness", "subject_vs_background", "permanence_mean_ncc",
         "permanence_worst_ncc", "permanence_chroma_worst"]
@@ -358,16 +359,13 @@ if __name__ == "__main__":
                         flag = " !" if abs(val - base) / den > 0.35 else ""
                     line += f"{str(val) + flag:>{w}}"
                 print(line, file=sys.stderr)
-            # Grain survives in proportion to the bits spent on it: the same
-            # content transcoded from 6993 to 651 kbps drops noise_sigma_flat by
-            # a quarter. Comparing a raw generator output against a clip already
-            # squeezed through a platform reads that difference as grain.
+            # Grain survives in proportion to the bits spent on it, so per-band
+            # noise levels are not comparable across a large bitrate gap.
             base_kbps = rs[0].get("kbps") or 0
             odd = [r["file"] for r in rs[1:]
                    if base_kbps and r.get("kbps")
                    and not 0.5 <= r["kbps"] / base_kbps <= 2.0]
             if odd:
                 print(f"\nnote: bitrate differs from the reference by more than 2x "
-                      f"({', '.join(odd)}).\n      noise_sigma_flat and noise_by_luma "
-                      f"are not comparable across that gap;\n      transcode to a "
-                      f"matching bitrate before reading them.", file=sys.stderr)
+                      f"({', '.join(odd)}).\n      noise_by_luma is not comparable "
+                      f"across that gap; noise_luma_slope is.", file=sys.stderr)

@@ -29,11 +29,6 @@ def emit(F, fps, name):
     return p
 
 
-def add_noise(F, sigma):
-    z = np.random.default_rng(1).normal(0, sigma, F.shape[:3])[..., None]
-    return np.clip(F.astype(np.float32) + z, 0, 255).astype(np.uint8)
-
-
 def highlight_noise(F, sigma=4.0):
     """Noise only in the bright bands: tilts the noise-vs-luma profile upward."""
     Y = F.astype(np.float32).mean(-1)
@@ -139,7 +134,6 @@ def blur_one(F):
 
 # (label, injection, [(metric, expected direction), ...])
 CASES = [
-    ("noise +3.0",     lambda F: add_noise(F, 3.0), [("noise_sigma_flat", "up")]),
     ("highlight noise", highlight_noise,            [("noise_luma_slope", "up")]),
     ("gain 1.25x",     force_clip,                  [("clip_high_pct", "up")]),
     ("crush -40",      crush_black,                 [("clip_low_pct", "up")]),
