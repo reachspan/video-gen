@@ -15,7 +15,7 @@ These are not predictions. `tools/vq.py` separated real from generated on each.
 
 | id | tell | check | fix |
 |---|---|---|---|
-| `M1` | **Fake handheld.** Generated shake is white noise (slope −0.29); a real hand is 1/f (−1.68) with discrete corrections. Peakiness 20.6 vs 1.9. | `vq.py` → `shake_spectral_slope`, `shake_peakiness` | post only. Sum: <1 Hz postural drift, 0.25 Hz breathing, 1–3.5 Hz tremor (most amplitude), Poisson-timed impulses. Never a sinusoid. |
+| `M1` | **Camera motion magnitude.** Reference runs ~0.28px median inter-frame displacement; generated output ran 0.45px, i.e. too much, not too little. | `vq.py` → `motion_mean`; `post.py displacement()` | `post.py shake REF CAND OUT` adds only the deficit against the reference, so an already-mobile clip is left alone. |
 | `M2` | **No lens.** Sharpness follows the *subject*, not the optical axis. Real −0.31 radial / centre 1.36× corners; generated +0.27 / 0.60. | `vq.py` → `sharpness_radial_corr` | post only. Radial falloff + slight barrel. Cannot be prompted. |
 | `M3` | **Impossible dynamic range.** Window and interior both correctly exposed. Real clips 0.17% at 255; generated 0.04%. | `vq.py` → `clip_high_pct`, `pct_above_240`, `clip_to_shoulder` | prompt hard ("blows out to pure white, no detail"), then force a genuine clipped population in post. |
 | `M4` | **Object impermanence.** Background patches degrade under motion compensation: worst-NCC 0.33 real vs 0.25 generated. | `vq.py` → `permanence_worst_ncc` | shorter clips; fewer background objects; keep the subject from sweeping across detail. |
@@ -90,6 +90,18 @@ survived a platform encode*, not a pristine camera.
 | non-rigid residual | needs sub-pixel compensation; integer shifts give ratios >1 on *both* |
 
 ---
+
+## Validate a metric before trusting it
+
+Three metrics here have produced confidently wrong numbers: a hand-rolled phase
+correlation under-read displacement by 10x, a global flat-mask starved the bright
+luma bands to 31 pixels, and a shape check returned RGB unconverted. Each survived
+because the output looked plausible.
+
+Before a metric informs a decision, inject a known quantity and confirm recovery.
+`cv2.phaseCorrelate` recovers a 0.05px shift to within 0.001px, which is what makes
+sub-pixel displacement trustworthy. A metric that has never been tested against a
+known input is a hypothesis.
 
 ## Reference baselines
 

@@ -2,7 +2,7 @@
 """Algorithmic post-processing: deterministic signal transforms.
 
   post.py exposure REF CAND OUT    match clipping statistics to REF
-  post.py shake CAND OUT [AMP]     overlay handheld camera motion
+  post.py shake REF CAND OUT       overlay handheld motion, matched to REF
   post.py grain REF CAND OUT       add grain matching REF's luma profile
   post.py chain REF CAND OUT       all three, in order
 
@@ -104,10 +104,25 @@ def shake_path(n, fps, amp):
     return amp * series(), amp * series(), 0.06 * amp * series()
 
 
-def shake(cand, out=None, amp=6.0):
+def displacement(path, n=48):
+    """Per-frame global translation magnitude, in pixels."""
+    G = read(path, n, gray=True).astype(np.float32)
+    d = [cv2.phaseCorrelate(G[i], G[i + 1])[0] for i in range(len(G) - 1)]
+    return np.hypot(*np.array(d).T)
+
+
+def shake(cand, out=None, amp=None, ref=None):
+    """Overlay handheld motion. Amplitude is derived from a reference clip when
+    given; a fixed constant overshoots badly, since real handheld inter-frame
+    displacement is a fraction of a pixel."""
     C = read(cand)
     fps = probe(cand)["fps"]
     n, h, w = C.shape[:3]
+    if amp is None:
+        have = float(np.median(displacement(cand)))
+        want = float(np.median(displacement(ref))) if ref else have
+        amp = max(0.0, want - have)
+        print(f"target {want:.3f}px  present {have:.3f}px  adding {amp:.3f}px")
     dx, dy, rot = shake_path(n, fps, amp)
     pad = int(np.ceil(max(np.abs(dx).max(), np.abs(dy).max()))) + 2
     G = np.empty_like(C)
@@ -164,7 +179,7 @@ def grain(ref, cand, out=None):
 def chain(ref, cand, out):
     a, b = out + ".e.mp4", out + ".s.mp4"
     exposure(ref, cand, a)
-    shake(a, b)
+    shake(a, b, ref=ref)
     grain(ref, b, out)
     subprocess.run(["rm", "-f", a, b])
 
@@ -172,6 +187,6 @@ def chain(ref, cand, out):
 if __name__ == "__main__":
     c, a = sys.argv[1], sys.argv[2:]
     {"exposure": lambda: exposure(a[0], a[1], a[2]),
-     "shake": lambda: shake(a[0], a[1], float(a[2]) if len(a) > 2 else 6.0),
+     "shake": lambda: shake(a[1], a[2], ref=a[0]),
      "grain": lambda: grain(a[0], a[1], a[2]),
      "chain": lambda: chain(a[0], a[1], a[2])}[c]()
