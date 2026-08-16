@@ -18,13 +18,23 @@ candidate, and they are the cheapest way to see everything that is actually ther
 
     python tools/sweep.py strips ref.mp4 refsweep/    # blocking and motion over time
     python tools/sweep.py tiles  ref.mp4 refsweep/    # every region at 4x
+    python tools/sweep.py plan   ref.mp4              # what the tiles and strips are
 
 The tiles matter most. Set dressing, edge intrusions and props are exactly what gets
-missed on a casual watch and exactly what carries the meaning. Check the frame edges
-deliberately: things cropped by the frame are easy to overlook and are often doing
-the work.
+missed on a casual watch and exactly what carries the meaning. They are written as a
+6-row by 4-column grid named `f<frame>_t<row><col>`, so **the frame edges are column
+0 and column 3, and rows 0 and 5** — open those deliberately. Things cropped by the
+frame are easy to overlook and are often doing the work.
 
-Note the duration, the shot size, whether there is a cut, and where the beats fall.
+Record the duration, whether there is a cut, and where the beats fall, into `shot`.
+If you are compiling part of a longer reference, put the span in `segment`; a spec
+that does not say which seconds it describes cannot be checked against anything.
+
+Then ask of every prop: **what is it for?** A thing in a person's hands is rarely
+just a thing. It may be a pun, a threat, a tell, or genuine busywork, and those
+demand different prompts — busywork can be swapped for anything, a pun cannot be
+touched. Getting this wrong is the failure mode that survives every downstream check,
+because the object will be present and correct and mean nothing.
 
 ## 2. Find the premise before listing anything
 
@@ -72,6 +82,79 @@ additional people — which a crude "no other people in frame" rule cannot disti
 from deleting the two people who are supposed to be there. Keep forbidden assertions
 narrow and literal, and let element coverage enforce presence.
 
+The collision is not limited to counting people. Any instruction that *tightens* —
+a closer shot size, a push-in, a tidier background — can delete an element at the
+frame edge as a side effect, and G2 will not notice, because the element is still
+named in the prompt while no longer being in the shot the prompt describes. Record
+that reasoning next to the assertion so a later editor sees the coupling.
+
+### Real brands, and names spoken aloud
+
+If the reference carries a real company's trade dress, or a real name is spoken, it
+is doing one of two jobs: it is incidental, or it is what the premise is about.
+
+- **Incidental** — strip it. Ask for unbranded, worn equipment and plain garments. A
+  wrong wordmark reads as fake faster than no wordmark.
+- **Load-bearing** — genericise rather than reproduce. Keep the shape of the line and
+  swap the name. Attaching a real, named employer to a premise the reference invites
+  the viewer to read as coercion is a claim about that employer, not a recreation of
+  a shot, and it is worth neither the exposure nor the argument.
+
+Record which call you made and why in the spec; it is a semantic edit to the
+reference and the next person needs to know it was deliberate.
+
+## 3a. The file
+
+`gate.py` hard-requires `elements[]`, `forbidden_assertions`, `performance`
+and `composition`. Everything else is for the human reader and for whoever revises
+this later. `targets/` is gitignored, so there is no example in the repo to copy —
+this is the shape:
+
+```json
+{
+  "source": "<shortcode or filename>",
+  "segment": "0.0-4.0s",
+  "premise": "<one paragraph: what this is doing and why it works>",
+  "mechanism": ["<the specific devices that deliver the premise>"],
+  "shot": {"duration_s": 4.0, "cut_count": 0, "beats": ["0.7-1.0s pause"]},
+  "elements": [
+    {"id": "cable-coil",
+     "what": "<plain description, in the words you would use to a stranger>",
+     "function": "<what breaks if this is removed>",
+     "necessity": "required",
+     "evidence": "<where you saw it>"}
+  ],
+  "performance": {
+    "affect": "flat, tired, resigned",
+    "forbidden_affect": ["cheerful", "relaxed"],
+    "note": "<why affect is load-bearing here>"
+  },
+  "composition": {
+    "shot_size": "medium, mid-thigh to just above the head",
+    "subject_share": "<fraction of FRAME HEIGHT the subject spans>",
+    "forbidden": ["wide shot"],
+    "note": "<why a forbidden framing breaks it>"
+  },
+  "must_be_true": ["<what a naive viewer should be able to confirm>"],
+  "forbidden_assertions": ["<sentences the prompt must never contain>"],
+  "known_blind_spots": ["<what this spec cannot check>"]
+}
+```
+
+### Do not write `what` as a prompt sentence
+
+G2 scores stem-token overlap between each element's `what` and the prompt. If you
+author both in one pass, phrasing the `what` the way you intend to phrase the prompt,
+it passes by construction and has checked nothing. **Write `what` as you would
+describe the thing to someone who has not seen the video**, then write the prompt
+separately. A gate that passes on prose written to satisfy it is not evidence.
+
+### Affect is not covered by any gate
+
+G4 checks only `forbidden_affect`. Nothing verifies that `performance.affect`
+survived into the prompt, so on a clip where the affect *is* the joke, also record it
+as a `required` element — that is the only way the coverage check sees it.
+
 ## 4. Write the prompt
 
 Blocks, in this order. Each answers one question and repeats nothing:
@@ -87,6 +170,7 @@ Blocks, in this order. Each answers one question and repeats nothing:
     LOCATION          the room, including incidental ugliness
     LIGHTING          sources, direction, and what blows out
     CAMERA            how it is held and what it must not do
+    TEXT AND BRANDING what carries no writing, and what is unbranded
     AUDIO             who speaks, and that nobody narrates
 
 Rules that come from what the models actually do:
