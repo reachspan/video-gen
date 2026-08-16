@@ -71,7 +71,11 @@ Also record:
 - `composition.shot_size`, `subject_share`, `composition.forbidden` — note *why* a
   forbidden framing breaks it, not just that it does.
 - `must_be_true` — statements a naive viewer should be able to confirm from the
-  finished clip. These are what the blind readers in `judge.md` are checking.
+  finished clip. These are what the blind readers in `judge.md` are checking. For
+  each required prop, at least one has to say how the thing **works** — what it is
+  doing, what would happen if it were let go — and not merely that it is there. A
+  presence claim is satisfied by an object that is present and inert, which is the
+  failure this spec exists to catch.
 - `forbidden_assertions` — sentences the prompt must never contain.
 
 ### A trap in `forbidden_assertions`
@@ -163,18 +167,43 @@ Rules that come from what the models actually do:
 - **Negatives go inline.** No Seedance endpoint accepts `negative_prompt`.
 - **State counts explicitly.** Dialogue scenes attract extra onlookers, and removing
   them from a start frame does not stop it. "Exactly two other people, and no more."
-- **Lock what must not change** across the take — the grip, the shot size, the seated
-  position. Drifty push-in is a default and has to be negated.
+- **Negate the drifty push-in.** It is a default and does not stop on its own.
 - **Ask for involuntary movement** by name: breathing that creases the shirt, blinks,
-  a swallow, a weight shift. Otherwise the subject goes still between scripted beats.
+  a swallow, a weight shift. Ask it of everyone in frame rather than only whoever is
+  speaking, or they all go still between scripted beats.
 - **Ask for unretouched skin.** The beauty prior applies to video as well as stills.
 - **Forbid in-frame text and logos.** Any glyph will be reproduced garbled, and a
   wrong wordmark on an otherwise convincing object reads as fake faster than a
   blank one.
-- **Anchor scale and reach to something in frame.** An object at the wrong size
-  against a body is spotted instantly, and one that intrudes further than intended
-  changes the shot. Naming the object alone fixes neither; tie it to a landmark —
-  "no larger than his hand, entering only at the frame edge".
+### Constrain what a thing is, not where it sits
+
+Every constraint falls into one of three registers, and only two of them are safe to
+write:
+
+| register | what it fixes | write it? |
+|---|---|---|
+| identity | what the thing **is** — one continuous strand, the same tool, three people | yes, lock it hard |
+| relation | how things **stand to each other** — what holds what, what is within reach | yes, this is the target |
+| pose | where a thing **sits at each instant** | never |
+
+A pose constraint is satisfiable by exactly one configuration, so the model spends
+its whole motion budget holding that configuration and the thing goes dead. Identity
+and relation each admit a *family* of configurations, and movement survives inside a
+family. So pair every lock with the motion that has to continue through it: a strand
+keeps its route and its count while the hands fidget inside it; a tool stays the same
+tool at the same distance while the hand holding it drifts and re-grips.
+
+The freeze is easiest to write by accident for whatever you were not thinking about —
+a figure at the frame edge, a hand that only holds something. It reads exactly as
+badly there as on the speaker.
+
+**Geometry is a bound, never a target.** A measured figure is safe as a limit and
+dangerous as a value: "no deeper than a fifth of the frame width" admits a family,
+while "a fifth of the frame width in" admits one, and one is a pose. Anchor the bound
+to something already in the frame rather than to an absolute — "no larger than his
+hand, entering only at the frame edge" — since size and reach are judged against a
+body, and naming the object alone fixes neither. Prefer the relation to either:
+"close enough that he would have to lean away from it" survives being obeyed.
 
 ## 5. Swaps and changes
 
