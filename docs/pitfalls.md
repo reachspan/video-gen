@@ -15,11 +15,11 @@ These are not predictions. `tools/vq.py` separated real from generated on each.
 
 | id | tell | check | fix |
 |---|---|---|---|
-| `M1` | **Camera motion magnitude.** Reference runs ~0.28px median inter-frame displacement; generated output ran 0.45px, i.e. too much, not too little. | `vq.py` → `motion_mean`; `post.py displacement()` | `post.py shake REF CAND OUT` adds only the deficit against the reference, so an already-mobile clip is left alone. |
-| `M2` | **No lens.** Sharpness follows the *subject*, not the optical axis. Real −0.31 radial / centre 1.36× corners; generated +0.27 / 0.60. | `vq.py` → `sharpness_radial_corr` | post only. Radial falloff + slight barrel. Cannot be prompted. |
-| `M3` | **Impossible dynamic range.** Window and interior both correctly exposed. Real clips 0.17% at 255; generated 0.04%. | `vq.py` → `clip_high_pct`, `pct_above_240`, `clip_to_shoulder` | prompt hard ("blows out to pure white, no detail"), then force a genuine clipped population in post. |
-| `M4` | **Object impermanence.** Background patches degrade under motion compensation: worst-NCC 0.33 real vs 0.25 generated. | `vq.py` → `permanence_worst_ncc` | shorter clips; fewer background objects; keep the subject from sweeping across detail. |
-| `M5` | **Motion too uniform.** Real handheld is bursty (`motion_cv` 0.41); generated 0.36 and smoother. | `vq.py` → `motion_cv` | script discrete events; add post shake with real impulse content. |
+| `M1` | **Camera motion magnitude.** Reference ~0.28px median inter-frame displacement; generated 0.45px — too much, not too little. | `vq.py` → `displacement_px`, `motion_mean` | `post.py shake REF CAND OUT` adds only the deficit, so an already-mobile clip is untouched. |
+| `M2` | **Impossible dynamic range.** Real segments span 0.11–0.46% of pixels at 255; generated 0.02%, below all of them. | `vq.py` → `clip_high_pct`, `pct_above_240`, `clip_to_shoulder` | prompting does not move it — two attempts went the wrong way. `post.py exposure`. |
+| `M3` | **Grain profile.** Real band ratio 3.65–3.90 across three segments; generated 2.60. **Provisional** — one camera only. | `vq.py` → `noise_luma_ratio` | generated is noisier than real in every band, so the gap closes downward, not by adding grain. |
+| `M4` | **Object impermanence.** Background tiles under motion compensation: real mean-NCC 0.65–0.86, generated 0.37. | `vq.py` → `permanence_mean_ncc`, `permanence_worst_ncc` | shorter clips; fewer background objects; keep the subject from sweeping across detail. |
+| `M5` | **Adjacent-frame stability.** Real 0.921–0.957; generated 0.867, below every real segment. | `vq.py` → `ssim_min` | shorter takes; fewer simultaneous moving elements. |
 
 **Grain magnitude** is the one axis where generated output overshoots rather than
 falls short: it measures noisier than the reference in every luma band. `post.py grain`
@@ -56,7 +56,7 @@ adds noise, so it is the wrong tool here — the gap wants closing from the othe
 | **Drifty push-in** unless locked | hurts — it's a creep, not handheld jitter |
 | **Crowd creep** — dialogue scenes add onlookers; start-frame removal does *not* stop it | we want exactly two edge figures; specify the count and negate extras |
 | **Spontaneous narration** | must negate explicitly |
-| **Floaty, overlit look** | corroborates `M3` independently |
+| **Floaty, overlit look** | corroborates `M2` independently |
 | **No `seed`, no `negative_prompt`** | zero reproducibility; A/B needs N per arm, not pairs |
 | **Dubbing fails on a visible mouth** | audio is locked at generation time |
 | **64:1 reject ratio** on real production | the planning number |
@@ -85,7 +85,7 @@ survived a platform encode*, not a pristine camera.
 |---|---|
 | lateral chromatic aberration | 0 ppm on real reference — chroma subsampling |
 | temporal noise independence | 0.87 on real — measures static texture, not sensor noise |
-| grain advection gain | 0.014 — inter-frame motion is 0.03 px, nothing to advect |
+| grain advection gain | killed on a displacement figure later found 10x too low; untested since the estimator was fixed, so this one may be recoverable |
 | vignetting | scene content swamps lens falloff (bright windows at frame edges) |
 | non-rigid residual | needs sub-pixel compensation; integer shifts give ratios >1 on *both* |
 
@@ -93,10 +93,15 @@ survived a platform encode*, not a pristine camera.
 
 ## Validate a metric before trusting it
 
-Three metrics here have produced confidently wrong numbers: a hand-rolled phase
-correlation under-read displacement by 10x, a global flat-mask starved the bright
-luma bands to 31 pixels, and a shape check returned RGB unconverted. Each survived
-because the output looked plausible.
+Metrics here have produced confidently wrong numbers four times: a hand-rolled phase
+correlation under-read displacement by 10x, a global flat-mask starved the bright luma
+bands to 31 pixels, a shape check returned RGB unconverted, and the optical sharpness
+field separated real from generated only until real footage was compared against
+itself. Each survived because its output looked plausible.
+
+Two gates, not one. Injection proves a metric responds to its own defect; a corpus of
+real clips proves the response is larger than real footage's own variance. Four metrics
+passed injection and failed the corpus.
 
 Before a metric informs a decision, inject a known quantity and confirm recovery.
 `cv2.phaseCorrelate` recovers a 0.05px shift to within 0.001px, which is what makes
@@ -130,7 +135,7 @@ recovered unprompted. That is the bar a candidate has to clear.
 
 ## Post-production chain
 
-`M1`–`M3` cannot be prompted away. Full detail in `scratchpad/forensics.json`
+`M2` and `M3` cannot be prompted away. Full detail in `scratchpad/forensics.json`
 (24 tells, 16 techniques). **Order matters and several plausible orderings are wrong:**
 
 1. **Photometric first** — clipping, then AE/WB drift. Must precede grain, or the
@@ -145,7 +150,7 @@ recovered unprompted. That is the bar a candidate has to clear.
 6. **Grain LAST**, immediately before encode. Everything above resamples or averages,
    which destroys grain applied earlier.
 
-**Highest-value single item: forced highlight clipping** (`M3`). Visible to a casual
+**Highest-value single item: forced highlight clipping** (`M2`). Visible to a casual
 viewer, immune to compression, trivially measurable. Targets `0.35%` at/above 254 and
 `0.80%` at/below 1 — note the asymmetry, roughly **twice as much crushed black as blown
 white**. Prompt for it *and* verify per clip; the model's aesthetic prior resists it.

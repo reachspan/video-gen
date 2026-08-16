@@ -7,26 +7,26 @@
 JSON on stdout, comparison table on stderr. Metrics are only meaningful
 relative to a reference measured in the same run.
 
-Excluded because they measure nothing at platform bitrates: lateral chromatic
-aberration (chroma subsampling removes it), grain advection (handheld motion is
-sub-pixel), raw temporal residual correlation (dominated by static texture),
-vignetting (scene content dominates lens falloff).
+Every metric here is validated two ways: it responds to its own injected defect
+(tools/selftest.py) and it separates generated output from real footage by more
+than real footage varies from itself.
+
+Excluded for measuring nothing at platform bitrates: lateral chromatic aberration,
+grain advection, raw temporal residual correlation, vignetting.
+
+Excluded for failing calibration - real segments of one camera disagree with each
+other as much as they disagree with generated output: sharpness radial falloff and
+centre/corner ratio (sign flips with subject placement), shake spectral slope and
+peakiness, radial FFT slope.
 """
 import json, sys
 import cv2
 import numpy as np
 from scipy import ndimage
 from skimage.metrics import structural_similarity as ssim
-from vid import read, write, probe, luma, keyframes
+from vid import read, probe, luma, keyframes
 
 SPATIAL, TEMPORAL = 24, 48
-
-
-def blocks(img, gy, gx):
-    """Reshape into a (gy, gx) grid of tiles, trimming any remainder."""
-    h, w = img.shape
-    bh, bw = h // gy, w // gx
-    return img[:bh * gy, :bw * gx].reshape(gy, bh, gx, bw).swapaxes(1, 2)
 
 
 def measure(path):
@@ -68,31 +68,7 @@ def measure(path):
     m["pct_above_240"] = round(float(h[240:].sum() / t * 100), 3)
     m["clip_to_shoulder"] = round(float(h[254:].sum() / (h[235:250].sum() + 1e-9)), 3)
 
-    # optics: a lens is sharpest on axis; a renderer is sharpest on the subject
-    mean = Y.mean(0)
-    gy, gx = 6, 4
-    tiles = blocks(mean, gy, gx)
-    lap = np.array([[ndimage.gaussian_laplace(tiles[i, j], 1.0).std()
-                     for j in range(gx)] for i in range(gy)])
-    sd = tiles.std(axis=(2, 3))
-    fld = np.where(sd > 3, lap / np.maximum(sd, 1e-6), np.nan)
-    yy, xx = np.mgrid[0:gy, 0:gx]
-    rad = np.hypot((yy + .5) / gy - .5, (xx + .5) / gx - .5)
-    ok = ~np.isnan(fld)
-    m["sharpness_radial_corr"] = round(float(np.corrcoef(rad[ok], fld[ok])[0, 1]), 3)
-    m["sharpness_centre_vs_corner"] = round(float(
-        np.nanmean(fld[2:4, 1:3]) / np.nanmean(
-            [fld[0, 0], fld[0, -1], fld[-1, 0], fld[-1, -1]])), 3)
-
-    P = np.abs(np.fft.fftshift(np.fft.fft2(Y[0] - Y[0].mean()))) ** 2
-    cy, cx = np.array(P.shape) // 2
-    ry, rx = np.ogrid[:P.shape[0], :P.shape[1]]
-    r = np.hypot(ry - cy, rx - cx).astype(int)
-    rp = np.bincount(r.ravel(), P.ravel()) / np.maximum(np.bincount(r.ravel()), 1)
-    k = np.arange(3, min(len(rp), P.shape[0] // 2))
-    m["fft_slope"] = round(float(np.polyfit(np.log(k), np.log(rp[k] + 1e-12), 1)[0]), 3)
-
-    # camera: a hand is a damped mass, so its spectrum is 1/f, never white
+    # camera motion and temporal stability
     G = read(path, TEMPORAL, gray=True).astype(np.float32)
     sh, energy, ssims = [], [], []
     for i in range(len(G) - 1):
@@ -101,12 +77,7 @@ def measure(path):
         energy.append(float(np.abs(G[i + 1] - G[i]).mean()))
         ssims.append(float(ssim(G[i], G[i + 1], data_range=255)))
     sh = np.array(sh)
-    d = np.hypot(sh[:, 0], sh[:, 1])
-    S = np.abs(np.fft.rfft((d - d.mean()) * np.hanning(len(d)))) ** 2
-    kk = np.arange(1, len(S))
-    m["shake_spectral_slope"] = round(float(
-        np.polyfit(np.log(kk), np.log(S[1:] + 1e-12), 1)[0]), 3)
-    m["shake_peakiness"] = round(float(S[1:].max() / (np.median(S[1:]) + 1e-12)), 1)
+    m["displacement_px"] = round(float(np.median(np.hypot(sh[:, 0], sh[:, 1]))), 3)
     e = np.array(energy)
     m["motion_mean"] = round(float(e.mean()), 3)
     m["motion_cv"] = round(float(e.std() / (e.mean() + 1e-9)), 3)
@@ -136,10 +107,9 @@ def measure(path):
 
 
 KEYS = ["fps", "kbps", "gop", "noise_sigma_flat", "noise_luma_ratio", "clip_high_pct",
-        "pct_above_240", "clip_to_shoulder", "sharpness_radial_corr",
-        "sharpness_centre_vs_corner", "fft_slope", "shake_spectral_slope",
-        "shake_peakiness", "motion_mean", "motion_cv", "ssim_min",
-        "permanence_mean_ncc", "permanence_worst_ncc"]
+        "clip_low_pct", "pct_above_240", "clip_to_shoulder", "displacement_px",
+        "motion_mean", "motion_cv", "ssim_min", "permanence_mean_ncc",
+        "permanence_worst_ncc"]
 
 
 def viz(out, paths):
