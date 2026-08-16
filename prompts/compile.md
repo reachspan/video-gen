@@ -88,20 +88,24 @@ frame edge as a side effect, and G2 will not notice, because the element is stil
 named in the prompt while no longer being in the shot the prompt describes. Record
 that reasoning next to the assertion so a later editor sees the coupling.
 
-### Real brands, and names spoken aloud
+### A brand or a real name in the reference
 
-If the reference carries a real company's trade dress, or a real name is spoken, it
-is doing one of two jobs: it is incidental, or it is what the premise is about.
+Ask what any other element gets asked: what is the mark *doing*? Almost always it is
+incidental — the equipment carries a logo because real equipment does — and the text
+rule in §4 already handles it. Ask for unbranded, worn gear and no in-frame glyphs.
+Nothing is lost, because the mark was not carrying the premise.
 
-- **Incidental** — strip it. Ask for unbranded, worn equipment and plain garments. A
-  wrong wordmark reads as fake faster than no wordmark.
-- **Load-bearing** — genericise rather than reproduce. Keep the shape of the line and
-  swap the name. A recreation puts a real, named organisation inside a premise its
-  owner never agreed to, which is a claim about them rather than a recreation of a
-  shot, and it is worth neither the exposure nor the argument.
+When the mark **is** the premise, record that and raise it rather than editing around
+it. Give the element its real `function`, and note in `known_blind_spots` that the
+recreation cannot carry it: any in-frame wordmark comes back garbled whether it is
+the real name or an invented one, and an invented mark on an otherwise convincing
+object is the version that reads as fake fastest — `T9`. Swapping the name is not a
+fix; it buys the same defect plus a knockoff.
 
-Record which call you made and why in the spec; it is a semantic edit to the
-reference and the next person needs to know it was deliberate.
+Whether to name a real organisation at all is the user's call and the generator's own
+policy, not a rule this prompt gets to make. What belongs here is the note that the
+shot has a requirement the pipeline cannot satisfy, so nobody discovers it after
+paying for a generation.
 
 ## 3a. The file
 
