@@ -88,25 +88,6 @@ frame edge as a side effect, and G2 will not notice, because the element is stil
 named in the prompt while no longer being in the shot the prompt describes. Record
 that reasoning next to the assertion so a later editor sees the coupling.
 
-### A brand or a real name in the reference
-
-Ask what any other element gets asked: what is the mark *doing*? Almost always it is
-incidental — the equipment carries a logo because real equipment does — and the text
-rule in §4 already handles it. Ask for unbranded, worn gear and no in-frame glyphs.
-Nothing is lost, because the mark was not carrying the premise.
-
-When the mark **is** the premise, record that and raise it rather than editing around
-it. Give the element its real `function`, and note in `known_blind_spots` that the
-recreation cannot carry it: any in-frame wordmark comes back garbled whether it is
-the real name or an invented one, and an invented mark on an otherwise convincing
-object is the version that reads as fake fastest — `T9`. Swapping the name is not a
-fix; it buys the same defect plus a knockoff.
-
-Whether to name a real organisation at all is the user's call and the generator's own
-policy, not a rule this prompt gets to make. What belongs here is the note that the
-shot has a requirement the pipeline cannot satisfy, so nobody discovers it after
-paying for a generation.
-
 ## 3a. The file
 
 `gate.py` hard-requires `elements[]`, `forbidden_assertions`, `performance`
