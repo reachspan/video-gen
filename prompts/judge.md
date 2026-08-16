@@ -63,7 +63,7 @@ a control. Re-encode both to one bitrate and strip metadata:
 ```bash
 python3 - <<'EOF'
 import random, json, subprocess, pathlib
-files = ["dl/orig_4s.mp4", "gen/v4.mp4"]          # extend as needed
+files = ["dl/ref.mp4", "gen/cand.mp4"]            # extend as needed
 names = ["clip_a.mp4", "clip_b.mp4"]
 random.shuffle(files)
 pathlib.Path("blind").mkdir(exist_ok=True)

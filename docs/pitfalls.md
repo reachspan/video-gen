@@ -49,7 +49,7 @@ plainly as a frozen speaker, and is easier to produce by accident.
 | id | tell | how it reads |
 |---|---|---|
 | `T1` | **Statue torso.** Only mouth and head animate, body frozen. The top "AI presenter" signature. | a torso or shoulder edge holding a dead straight line for the whole clip while the face moves |
-| `T2` | **No breathing.** The shoulder line never rises or falls. | a flat collar edge. A real one wavers continuously; at 12–20 breaths a minute a 4–10s clip holds well under two cycles, so the signature is the tell and a *rate* is not recoverable |
+| `T2` | **No breathing.** The shoulder line never rises or falls. | a flat collar edge. A real one wavers continuously; at 12–20 breaths a minute a short clip holds well under two full cycles, so on anything that brief the signature is the tell and a *rate* is not recoverable |
 | `T3` | **No physiological jitter.** The head is glassy-smooth, with no micro-corrections. | a head that holds a line during a pause. Real heads never do, even when "still" |
 | `T4` | **Mask face.** The mouth articulates, the upper face is static; no brow flash on emphasis. | watched muted, nothing tells you which word was stressed |
 | `T5` | **Mannequin gaze.** Eyes welded to the lens: no saccades, no repositioning, no counter-rotation when the head turns. | the eyes never move independently of the skull |

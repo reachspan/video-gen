@@ -26,6 +26,44 @@ missed on a casual watch and exactly what carries the meaning. They are written 
 0 and column 3, and rows 0 and 5** — open those deliberately. Things cropped by the
 frame are easy to overlook and are often doing the work.
 
+### This step is not time-boxed
+
+Every later step is cheap to redo and this one is not. A misread here clears the gate,
+generates faithfully, and comes back confirmed by every downstream reader, because all
+of them are checking your sentence instead of the clip — so it survives a whole
+production run and costs every generation in it. Spend as long and as many tokens as
+it takes to be certain. There is no budget for this step and no reason to hurry it.
+
+**Sampling is not inspection.** Do not read a prop off three frames, or ten. For each
+load-bearing region, cut that region out of *every* frame and lay the run out as
+contact sheets, then read them in order:
+
+    ffmpeg -i ref.mp4 -vf "fps=N,crop=W:H:X:Y,scale=400:-1" sheet/f%03d.jpg
+    ffmpeg -pattern_type glob -i 'sheet/f*.jpg' -filter_complex tile=3x4 sheet%d.jpg
+
+Raise `fps` until nothing changes between adjacent cells. A thing that holds its shape
+across every frame is an observation; a thing seen three times is still a guess.
+
+**Zoom until the question is answered, not until the tile runs out.** The 4x tiles are
+where you start, not where you stop. When you cannot tell how many of something there
+are, crop tighter and scale harder — 6x, 8x, whatever settles it — and look for the
+*join*: the seam a wider crop merges away. Two hands read as one mass, two strands as
+one strand, two people as one person, and every one of those resolves at higher
+magnification.
+
+Never close the gap by inference. "It must be his other hand", "that has to be the
+same strand" — that is the shape of the error, and once it is written into `what` it is
+unfalsifiable for everyone downstream. If it will not resolve at any magnification,
+record it in `known_blind_spots` and say so plainly.
+
+**Count before you describe.** How many hands are in the picture? How many fists? How
+many separate strands, tools, people? Write the numbers down first, because a count is
+falsifiable and a description is not. Then for each one: **whose is it, and what is it
+attached to?** Trace every limb back to a shoulder or to the edge it enters from, every
+strand end to end, every tool to the hand holding it. Anything entering from an edge
+belongs to a body you cannot see, and quietly assigning it to the person you *can* see
+is the easiest mistake in this format to make and the hardest to notice afterwards.
+
 Record the duration, whether there is a cut, and where the beats fall, into `shot`.
 If you are compiling part of a longer reference, put the span in `segment`; a spec
 that does not say which seconds it describes cannot be checked against anything.
@@ -54,7 +92,7 @@ For each thing in the frame, record:
 | field | what it is for |
 |---|---|
 | `id` | a handle |
-| `what` | plain description, the words you would use in a prompt |
+| `what` | what a camera recorded — objects, counts, contacts, whose limb — and no interpretation |
 | `function` | **why it is there** — what breaks if it is removed |
 | `necessity` | `required` or `preferred` |
 | `evidence` | where you saw it, so a later reader can re-check |
@@ -108,7 +146,7 @@ this is the shape:
   "shot": {"duration_s": 4.0, "cut_count": 0, "beats": ["0.7-1.0s pause"]},
   "elements": [
     {"id": "cable-coil",
-     "what": "<plain description, in the words you would use to a stranger>",
+     "what": "<what a camera recorded: objects, counts, contacts, whose limb. No reading.>",
      "function": "<what breaks if this is removed>",
      "necessity": "required",
      "evidence": "<where you saw it>"}
@@ -130,13 +168,28 @@ this is the shape:
 }
 ```
 
-### Do not write `what` as a prompt sentence
+### How to write `what`
 
-G2 scores stem-token overlap between each element's `what` and the prompt. If you
-author both in one pass, phrasing the `what` the way you intend to phrase the prompt,
-it passes by construction and has checked nothing. **Write `what` as you would
-describe the thing to someone who has not seen the video**, then write the prompt
-separately. A gate that passes on prose written to satisfy it is not evidence.
+Two ways to get it wrong, and both are silent.
+
+**Do not write it as a prompt sentence.** G2 scores stem-token overlap between each
+element's `what` and the prompt. If you author both in one pass, phrasing the `what`
+the way you intend to phrase the prompt, it passes by construction and has checked
+nothing. Write it as you would describe the thing to someone who has not seen the
+video, then write the prompt separately. A gate that passes on prose written to
+satisfy it is not evidence.
+
+**Do not write the reading into it either.** `what` is the observation; `function` is
+the reading. A `what` that already carries the interpretation — "wrapped so that they
+read as bound" — cannot be checked against the video by anybody, including you,
+because the sentence is true of the reading rather than of the picture. Record what a
+camera recorded: which objects, how many, touching what, held by whom. Then let
+`function` say what it means.
+
+That one is the most expensive mistake available here. A wrong reading written as an
+observation passes the gate, generates faithfully, and comes back confirmed by every
+downstream reader — because each of them is checking your sentence rather than the
+clip. It is also the mistake the next step exists to catch.
 
 ### Affect is not covered by any gate
 
@@ -144,7 +197,61 @@ G4 checks only `forbidden_affect`. Nothing verifies that `performance.affect`
 survived into the prompt, so on a clip where the affect *is* the joke, also record it
 as a `required` element — that is the only way the coverage check sees it.
 
-## 4. Write the prompt
+## 4. Red-team the spec
+
+Compiling is one person reading one video once, and a misread at this stage is the
+most expensive error in the pipeline. It clears the gate, generates faithfully, and
+comes back confirmed by every downstream reader, because all of them are checking your
+sentence instead of the clip. So before writing a prompt, hand the spec's observations
+to a fresh agent and ask it to knock them down.
+
+Pull the `what` fields out of `elements[]` with their ids and list them as numbered
+claims. Send the observations only — strip anything interpretive, because a claim that
+cannot be falsified from the picture is not worth sending. Give the agent the
+reference's tiles and strips, the payload below, and **nothing else**: not the premise,
+not the mechanism, not the prompt. The premise is exactly what makes a wrong reading
+feel obvious, and a reader who has it will confirm whatever the spec says.
+
+> You are checking a written description of a short video against the video itself.
+> The description was written by someone who watched it once. It may be wrong. Your
+> job is to find where.
+>
+> You have the video's tiles and strips. The tiles are already at 4x — start there
+> rather than re-cropping a whole frame. Check every claim across the whole run of
+> frames rather than at a few timestamps, and where a count or a join is in question,
+> crop tighter and scale harder — 6x, 8x, whatever settles it — instead of guessing or
+> giving up. Two things merged into one by a wide crop is the failure you are looking
+> for.
+>
+> Below is a numbered list of claims about what is in the picture. Take each one and
+> **try to prove it false.** Default to `contradicted` when the picture does not
+> plainly support it. Three verdicts only:
+>
+> - `confirmed` — the picture plainly shows this
+> - `contradicted` — the picture shows something else; say what it actually shows
+> - `not_visible` — will not resolve even after cropping tighter and scaling harder.
+>   A real answer, and expected
+>
+> Then, separately and in your own words: **for every hand and arm in the picture, say
+> whose body it belongs to and how you can tell.** Anything entering from a frame edge
+> belongs to someone you cannot see. Then list anything else you can see that no claim
+> mentions and that looks like it might matter — an object, a connection between two
+> things, a person, a contact.
+>
+> Return JSON: {claims: [{id, verdict, what_the_picture_shows, where: [{frame, tile}]}],
+> limbs: [{which, belongs_to, how_you_can_tell, where: [{frame, tile}]}],
+> unlisted: [{what, why_it_might_matter, where: [{frame, tile}]}]}
+
+Every `contradicted` goes back into the spec before a prompt is written, and so does
+anything in `limbs` or `unlisted` that turns out to carry meaning. Resolve
+`not_visible` on a required element too: something no one can make out at 4x is not
+something a viewer is going to read.
+
+Run this again after any change to `elements[]`, and treat a disagreement as the
+spec's problem until the picture says otherwise. The whole value of the step is that
+it has not read your premise; arguing it round to your reading throws that away.
+
+## 5. Write the prompt
 
 Blocks, in this order. Each answers one question and repeats nothing:
 
@@ -205,7 +312,7 @@ hand, entering only at the frame edge" — since size and reach are judged again
 body, and naming the object alone fixes neither. Prefer the relation to either:
 "close enough that he would have to lean away from it" survives being obeyed.
 
-## 5. Swaps and changes
+## 6. Swaps and changes
 
 ### Swapping the character
 
@@ -239,7 +346,7 @@ change contradicts a `required` element's `function`, say so plainly and ask —
 is the case the spec exists to catch. A change to the setting or the wardrobe is
 usually free; a change to the mechanism is a different video.
 
-## 6. Gate before generating
+## 7. Gate before generating
 
     python tools/gate.py targets/X.intent.json targets/X.v4.txt
 

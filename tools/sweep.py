@@ -163,8 +163,9 @@ PLAN = [
      "strip_col_* crossing the shoulder or collar line of anyone whose chest is in "
      "frame. Judge the SIGNATURE, not "
      "a rate: a real chest edge rises and falls continuously, a generated one "
-     "holds a dead flat line. At 12-20 breaths a minute a 4-10s clip contains "
-     "well under two cycles, so a rate is not recoverable and must not be "
+     "holds a dead flat line. At 12-20 breaths a minute a short clip contains "
+     "well under two full cycles, so on anything that brief a rate is not "
+     "recoverable and must not be "
      "reported as one; a sustained flat edge is still a defect, and a wavering "
      "one still clears."),
     ("T3", "No physiological jitter", "subject_stillness",
