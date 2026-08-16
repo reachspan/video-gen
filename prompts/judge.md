@@ -283,3 +283,18 @@ Then read the skeptic against that table — as a check on the sweep, not on the
 
 The report must name what was **not** resolved. A sweep that reports only defects is
 indistinguishable from one that did not look.
+
+### One thing that is not a quality call
+
+Report alongside the verdict, whichever way it goes:
+
+    grep -aob 'c2pa' out.mp4 | head        # a low offset means a manifest is present
+
+A raw Seedance delivery carries a signed provenance manifest declaring it
+AI-generated, and `ffprobe` shows a clean file because it does not parse those boxes
+(`docs/evidence.md`). Any re-encode removes it, so a clip that has been through
+`post.md` has already lost it as a side effect.
+
+This does not gate anything and it is not a defect — it is a disclosure fact about
+the file being shipped, and whoever ships it should know which of those two files
+they have rather than discovering it from a platform label.

@@ -113,6 +113,34 @@ A hotspot is a place to look, never a verdict. The subject mask is derived per c
 but hands and props reaching the frame edges can land outside it, and a moving hand
 legitimately scores low.
 
+## What the container carries
+
+Two things sit outside the picture entirely, in the file rather than in the frames.
+Neither is a quality measure and neither belongs in a sweep, but a delivered file is
+not fully described without them.
+
+**A signed C2PA provenance manifest.** Measured on a real completed job: a ~21KB
+`uuid` box at offset 32 of the delivered MP4, carrying `softwareAgent
+BytePlus_ModelArk`, the model name, a log id tying the file to a specific generation
+request, a tamper-evident hash, an X.509 signature, and `digitalSourceType` set to
+the IPTC value `trainedAlgorithmicMedia` — the value platforms auto-label on.
+
+**`ffprobe` and `exiftool` do not parse C2PA boxes**, so both report a clean file.
+Byte-scan instead:
+
+    grep -aob 'c2pa' out.mp4 | head        # a low offset means a manifest is present
+
+The manifest is container-bound, not a pixel watermark, so **any** re-encode drops it
+— including `post.py`, any concat, and the platform's own ingest transcode. That
+makes its removal a side effect of ordinary processing rather than an act, which is
+exactly why it is worth knowing where in a chain it dies.
+
+**Encoder fingerprints.** `strings -a out.mp4 | grep -iE 'x264|Lavc|Lavf'` returns
+the muxer and the full x264 option string. The x264 record lives in the H.264
+bitstream rather than the container, so it survives a remux. This matters if a file
+is sent to someone directly; after a platform transcode, container forensics
+collapses toward chance regardless of origin.
+
 ## Measured axes
 
 Where a generated clip departs from its reference. Useful as **match targets** and as
