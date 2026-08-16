@@ -122,3 +122,8 @@ A post pass moves the signal metrics toward the reference by construction, so a
 better score afterwards is not evidence of anything. The check that matters is that
 nothing visible broke — a levels stretch can band, and a shake overlay can smear a
 region that was already soft.
+
+One side effect worth knowing about: every stage here re-encodes, and a raw delivery
+carries a signed provenance manifest that any re-encode drops. So the file coming out
+of `post.py` differs from the one going in in a way no metric reports and `ffprobe`
+does not show. `docs/evidence.md` says what the manifest is and how to check for it.

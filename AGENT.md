@@ -16,6 +16,7 @@ points.
 | exposure, shake or grain brought closer to the reference | `prompts/post.md` |
 | to know what tends to go wrong in this format | `docs/pitfalls.md` |
 | to read what the artifacts and the metrics show | `docs/evidence.md` |
+| to know what a delivered file carries besides the picture | `docs/evidence.md` |
 
 If the request spans several, the order is:
 
