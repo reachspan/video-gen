@@ -7,12 +7,18 @@ Everything else is a component with one job:
 
 | file | job | does NOT |
 |---|---|---|
+| `prompts/compile.md` | reference video → intent spec + prompt, incl. swaps | generate or judge |
+| `prompts/face-gen.md` | build a character reference image | write the video prompt |
+| `prompts/surgery.md` | repair a localized defect by regenerating a span | decide there is one |
 | `tools/gate.py` | prompt vs intent, before generating | look at pixels |
 | `tools/vq.py` | signal measurement against a reference | decide anything |
 | `tools/sweep.py` | build inspection artifacts, emit the checklist | judge them |
 | `docs/pitfalls.md` | catalogue of what goes wrong in this format | say how to sweep |
 | `docs/minesweep.md` | how to read the artifacts, and why they cover the clip | list pitfalls |
-| this file | run the check, dispatch the agents, consolidate | measure |
+| this file | run the check, dispatch the agents, consolidate, decide | measure |
+
+The order of work: `compile.md` (with `face-gen.md` for identity) → `gate.py` →
+generate → **this file** → `surgery.md` or `post.py` if the verdict says so.
 
 ---
 
@@ -170,7 +176,9 @@ Collect every package and every judge into one table: pitfall or judge, verdict,
 where, severity. Then:
 
 - **Any `defect` at severity 4+, or any failed judge** → do not ship. A semantic
-  failure (J1, J3) needs a regeneration; a signal mismatch usually needs `post.py`.
+  failure (J1, J3) is a prompt problem: revise the spec via `compile.md` and
+  regenerate whole. A signal mismatch is `post.py` and costs nothing. A defect that
+  occupies part of the runtime and leaves the rest usable is `surgery.md`.
 - **`cannot_tell` on a severity-4-capable pitfall** → resolve it before deciding.
   Re-crop tighter, or say plainly in the report that it went unresolved.
 - **Everything else clear** → ship, and record what was swept.

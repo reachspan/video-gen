@@ -26,6 +26,9 @@ page load and prepend it to `DOC_IDS`.
 ## Evaluation suite
 
     prompts/judge.md ENTRY POINT — the quality-check procedure, start here
+    prompts/compile.md  reference video → intent spec + prompt, and how to swap parts
+    prompts/face-gen.md building a character reference image that reads as real
+    prompts/surgery.md  repairing a localized defect without re-rolling the shot
     utils/ig-dl      reference-clip downloader
     tools/vid.py     video I/O (PyAV decode/encode, probe, sampling)
     tools/vq.py      measurement: reference-relative signal metrics
@@ -37,9 +40,10 @@ page load and prepend it to `DOC_IDS`.
     docs/minesweep.md  how to read the sweep artifacts
     docs/forensics.json  24 forensic tells, 16 remediation techniques
 
-Each piece has one job and no other: `gate.py` reads the prompt, `vq.py` measures
-signal, `sweep.py` builds what gets looked at, and `judge.md` runs the check and
-decides. Nothing but `judge.md` decides anything.
+Each piece has one job and no other: `compile.md` writes the spec, `face-gen.md`
+builds identity, `gate.py` reads the prompt, `vq.py` measures signal, `sweep.py`
+builds what gets looked at, `surgery.md` repairs a span. `judge.md` runs the check
+and decides — nothing else decides anything.
 
 ### Setup
 
