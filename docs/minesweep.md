@@ -12,8 +12,8 @@ to run, who runs it, and how the answers combine.
 `plan.md` ends with **work packages**: pitfalls bundled by the evidence they need,
 one fresh agent each, run in parallel. Every tile belongs to exactly one package,
 whose agent answers every question that applies to it — text included. That is what
-keeps them parallel; a package defined by theme rather than evidence ends up
-re-opening tiles another package already holds.
+keeps them parallel: a package defined by theme rather than by evidence needs tiles
+another package already holds.
 
 ## The problem this solves
 

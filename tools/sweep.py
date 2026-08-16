@@ -131,9 +131,8 @@ def tiles(path, outdir, nframes=3):
 
 # Pitfalls bundled into work packages, one package per subagent. Packages are cut
 # by EVIDENCE, not by theme: every tile is read by exactly one agent, which answers
-# every question that applies to it. Cutting by theme instead makes a text pass that
-# must open all 96 tiles, duplicating three other packages and taking five times as
-# long as any of them, which then paces the whole run.
+# every question that applies to it. A theme-shaped package that needs every tile
+# would duplicate the others and set the pace for the whole run.
 PACKAGES = [
     ("motion-and-life", ["T1", "T2", "T3", "T8", "T11", "T13"],
      "strip_* — all of them, candidate and reference — plus motion_by_block. No "
@@ -208,14 +207,15 @@ PLAN = [
      "whether they look more alike than several real people would."),
     ("T15", "Object scale and placement", "-",
      "tiles on every held or intruding object. TWO measurements, both stated as "
-     "ratios rather than impressions. (1) Size against the body: a hand is ~1 "
-     "head wide, a cordless drill body ~1 head long, a claw hammer ~1.4 heads "
-     "overall. Wrong in either direction counts — a truncated handle is as wrong "
-     "as an oversized body. (2) Intrusion depth: for anything entering from a "
-     "frame edge, measure the DEEPEST point of the whole assembly, bit, blade or "
-     "extension included, not the body's bounding box. An object whose body sits "
-     "at the edge while its tip crosses the frame centre is no longer an edge "
-     "intrusion, and measuring the body alone will clear it."),
+     "ratios rather than impressions. (1) Size, against a body landmark the "
+     "viewer already knows: head height, or hand breadth at ~1 head wide. Look up "
+     "the object's real dimension and compare. Wrong in either direction counts — "
+     "a foreshortened object is as wrong as an oversized one, and often it is one "
+     "part that is wrong while the rest is right. (2) Intrusion depth, for "
+     "anything entering from a frame edge: measure to the DEEPEST point of the "
+     "whole assembly, including any protruding part, not the body's bounding box. "
+     "A body that sits at the edge does not make an edge intrusion if its tip "
+     "reaches the middle of the frame."),
 ]
 
 

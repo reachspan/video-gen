@@ -96,9 +96,9 @@ is doing one of two jobs: it is incidental, or it is what the premise is about.
 - **Incidental** — strip it. Ask for unbranded, worn equipment and plain garments. A
   wrong wordmark reads as fake faster than no wordmark.
 - **Load-bearing** — genericise rather than reproduce. Keep the shape of the line and
-  swap the name. Attaching a real, named employer to a premise the reference invites
-  the viewer to read as coercion is a claim about that employer, not a recreation of
-  a shot, and it is worth neither the exposure nor the argument.
+  swap the name. A recreation puts a real, named organisation inside a premise its
+  owner never agreed to, which is a claim about them rather than a recreation of a
+  shot, and it is worth neither the exposure nor the argument.
 
 Record which call you made and why in the spec; it is a semantic edit to the
 reference and the next person needs to know it was deliberate.
@@ -184,10 +184,12 @@ Rules that come from what the models actually do:
   a swallow, a weight shift. Otherwise the subject goes still between scripted beats.
 - **Ask for unretouched skin.** The beauty prior applies to video as well as stills.
 - **Forbid in-frame text and logos.** Any glyph will be reproduced garbled, and a
-  wrong wordmark on real trade dress reads as fake faster than no wordmark at all.
-- **Anchor scale to something in frame.** An object at the wrong size relative to a
-  head is spotted instantly; "held near his head, no larger than his hand" survives
-  where "a drill" does not.
+  wrong wordmark on an otherwise convincing object reads as fake faster than a
+  blank one.
+- **Anchor scale and reach to something in frame.** An object at the wrong size
+  against a body is spotted instantly, and one that intrudes further than intended
+  changes the shot. Naming the object alone fixes neither; tie it to a landmark —
+  "no larger than his hand, entering only at the frame edge".
 
 ## 5. Swaps and changes
 

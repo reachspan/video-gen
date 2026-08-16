@@ -51,15 +51,7 @@ and gets cut.
 | `T12` | **Cinema bokeh on a phone framing.** Blur disc >1.5% of frame height is not a phone. | measure a background point highlight |
 | `T13` | **AE/WB never move.** Exposure flat for the whole clip. | plot per-frame mean luma; real shows wander + one step response |
 | `T14` | **Beauty bias / age flattening.** Ordinary 50-year-old returns as attractive 32. Worst under text-only identity. | 5 seeds side by side: more similar than 5 real people? |
-| `T15` | **Object scale and placement.** Held objects come back the wrong size in either direction; edge intrusions reach too far in. | measure against the head (drill body ~1, claw hammer ~1.4), and measure intrusion depth to the tip of bit or blade, not the body |
-
-**`T9` and `T15` are the two that keep landing**, and they land together on the same
-object: a held tool comes back oversized, pushed toward frame centre, and wearing a
-garbled near-miss of a real trademark. Both are prompt problems — specify tools as
-unbranded and worn, and anchor scale to something else in frame, in the same clause.
-
-Neither is detectable by any metric. They are found by reading tiles at 4x, which is
-why the sweep exists.
+| `T15` | **Object scale and placement.** Held objects come back the wrong size in either direction, often one part of an object rather than all of it; edge intrusions reach too far in. | measure against head height or hand breadth, and measure intrusion depth to the deepest protruding point, not the body |
 
 ---
 
@@ -148,8 +140,9 @@ Gates live in `tools/gate.py` (pre-generation, free) and `prompts/judge.md`
 (post-generation, blind, original as control). **Run them first: a clip that fails
 semantically is not worth measuring.**
 
-Blind-judge calibration: the source reel returns *real, 0.85* and its premise is
-recovered unprompted. That is the bar a candidate has to clear.
+Run the blind judges on the reference as well as the candidate. The reference's
+scores are the bar — a recreation has to reach what the footage it copies already
+gets, not some absolute standard.
 
 ---
 

@@ -78,8 +78,8 @@ and you will both miss real faults and invent ones that are not there.
 Check, in this order:
 
 1. **Did the beauty prior win?** Compare against the age and life you asked for. If
-   the face looks like a model playing a tradesman, reject it. This is the failure
-   that survives everything downstream.
+   the face looks like a model playing the part rather than someone who has lived
+   it, reject it. This is the failure that survives everything downstream.
 2. **Eyes.** Pupils round and matched, gaze on axis, catchlights consistent with one
    flat source.
 3. **Teeth and mouth**, at 4x.

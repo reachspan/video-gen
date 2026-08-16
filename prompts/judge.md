@@ -52,9 +52,9 @@ distrust every permanence number, not just a low absolute count.
 `plan.md` ends with a table of **work packages**. Spawn **one fresh agent per
 package, all at once**. Packages are cut by evidence rather than by theme, so every
 tile is read by exactly one agent, which answers every question that applies to it —
-including reading any text it contains. That is what keeps them genuinely parallel: a
-package defined as "all text everywhere" would re-open every tile the other packages
-already hold and pace the whole run on its own.
+including reading any text it contains. That is what keeps them genuinely parallel:
+a package defined by theme rather than by evidence needs tiles the others already
+hold, and sets the pace for the whole run.
 
 Give each package the reference's artifacts alongside the candidate's.
 
@@ -141,16 +141,18 @@ verdicts, and only then open `KEY.json`.
 > If you cannot resolve a detail at 4x, say "cannot tell" rather than reporting it.
 >
 > 1. What is physically happening in this shot?
-> 2. The person is holding something. What is it, and why are they holding it?
+> 2. Is the person holding or using anything? What is it, and why?
 > 3. Is anything else in the frame that seems significant? Check the frame edges.
-> 4. What is the point of this video — what is it for, and is it trying to be funny?
+> 4. What is the point of this video — what is it for, and what effect is it going
+>    for?
 > 5. How would you describe the person's mood and demeanour in three words?
 >
 > If you cannot answer any question from the video, say "cannot tell" rather than
 > inferring. Return JSON: {happening, prop_and_why, edges, purpose, mood}.
 
-**Pass:** (4) recovers coercion/duress/hostage-parody unprompted, and (5) is not
-positive-valence.
+**Pass:** (4) recovers the spec's `premise` unprompted, (2) recovers each required
+prop's `function` rather than merely naming the object, and (5) is consistent with
+`performance.affect`. Compare against the spec only *after* the answers are in.
 
 ### J2 — is it camera-captured (adversarial)
 
@@ -220,5 +222,6 @@ where, severity. Then:
 The report must name what was **not** resolved. A sweep that reports only defects
 is indistinguishable from one that did not look.
 
-Calibration: the source reel returns *real, 0.85* on J2 and its premise is recovered
-unprompted on J1. That is the bar a candidate has to clear.
+Calibration: run the judges on the reference too, and read its scores as the bar.
+A candidate is not being asked to be perfect — it is being asked to reach what the
+footage it is recreating already scores.
