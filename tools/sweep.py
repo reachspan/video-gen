@@ -22,6 +22,15 @@ SPACE. Small defects - text, logos, fingers, contact shadows - are invisible in 
 downscaled full frame, so the frame is cut into tiles and each is written at 4x.
 Every pixel lands in exactly one tile, and the tile grid matches the one vq.py
 scores, so a permanence hotspot names the tile to open.
+
+Tiles are written for a few frames spread across the clip AND for each tile's own
+worst moment, found by scanning every frame. A brief defect between the sampled
+frames would otherwise be missed entirely; this keeps the number of images fixed
+while the search behind them covers the whole clip.
+
+What can still slip through: a defect that is small, brief, and not the most
+anomalous moment in its own tile. Nothing here makes the sweep infallible - it
+makes it bounded, repeatable, and honest about where it looked.
 """
 import json, os, sys
 import cv2
@@ -58,25 +67,64 @@ def strips(path, outdir):
     return made
 
 
+def _crop(im, i, j, out):
+    h, w = im.shape[:2]
+    th, tw = h // ROWS, w // COLS
+    c = im[i * th:(i + 1) * th, j * tw:(j + 1) * tw]
+    c = cv2.resize(c, (tw * ZOOM, th * ZOOM), interpolation=cv2.INTER_LANCZOS4)
+    cv2.imwrite(out, cv2.cvtColor(c, cv2.COLOR_RGB2BGR))
+    return out
+
+
+def odd_frames(path, k=3):
+    """For each tile, the frame where it departs most from its own neighbours.
+
+    Sampling a few frames leaves a defect that appears briefly - a wordmark that
+    garbles for half a second, a grip that breaks and recovers - free to fall
+    between them. Every frame is scanned here, cheaply and at reduced scale, and
+    each tile reports its own worst moment, so the number of images to look at
+    stays fixed while the search covers the whole clip.
+
+    The score is a second difference in time, |2*f(t) - f(t-k) - f(t+k)|. Steady
+    drift and steady motion cancel; what survives is the moment a region stops
+    behaving like itself, which is the shape a transient defect has. Comparing
+    each frame against a whole-clip average instead just rediscovers the ends of
+    the clip on anything that drifts.
+    """
+    F = read(path)
+    small = np.stack([cv2.cvtColor(cv2.resize(f, (F.shape[2] // 4, F.shape[1] // 4)),
+                                   cv2.COLOR_RGB2GRAY) for f in F]).astype(np.float32)
+    n, h, w = small.shape
+    th, tw = h // ROWS, w // COLS
+    out = {}
+    if n < 2 * k + 1:
+        return out
+    for i in range(ROWS):
+        for j in range(COLS):
+            t = small[:, i * th:(i + 1) * th, j * tw:(j + 1) * tw]
+            dev = np.abs(2 * t[k:n - k] - t[:n - 2 * k] - t[2 * k:]).mean((1, 2))
+            out[(i, j)] = int(np.argmax(dev)) + k
+    return out
+
+
 def tiles(path, outdir, nframes=3):
-    """Every region of the frame at 4x, on frames spread across the clip."""
+    """Every region of the frame at 4x: on frames spread across the clip, plus
+    each tile at its own most anomalous frame."""
     os.makedirs(outdir, exist_ok=True)
     n = count(path)
     idx = spread(n, nframes)
-    got = read_at(path, idx)
+    odd = odd_frames(path)
+    got = read_at(path, sorted(set(idx) | set(odd.values())))
     made = []
     for f in idx:
-        im = got[f]
-        h, w = im.shape[:2]
-        th, tw = h // ROWS, w // COLS
         for i in range(ROWS):
             for j in range(COLS):
-                c = im[i * th:(i + 1) * th, j * tw:(j + 1) * tw]
-                c = cv2.resize(c, (tw * ZOOM, th * ZOOM),
-                               interpolation=cv2.INTER_LANCZOS4)
-                p = os.path.join(outdir, f"f{f:04d}_t{i}{j}.png")
-                cv2.imwrite(p, cv2.cvtColor(c, cv2.COLOR_RGB2BGR))
-                made.append(p)
+                made.append(_crop(got[f], i, j,
+                                  os.path.join(outdir, f"f{f:04d}_t{i}{j}.png")))
+    for (i, j), f in sorted(odd.items()):
+        if f not in idx:
+            made.append(_crop(got[f], i, j,
+                              os.path.join(outdir, f"odd_t{i}{j}_f{f:04d}.png")))
     return made
 
 
@@ -88,15 +136,15 @@ PACKAGES = [
      "strip_* (all of them). You are judging whether the body is alive and "
      "whether a hand held the camera."),
     ("face-and-gaze", ["T4", "T5"],
-     "tiles covering the head, every sampled frame."),
+     "tiles covering the head, sampled and odd_* alike."),
     ("hands-and-props", ["T6", "T7"],
-     "tiles covering the hands and anything held, every sampled frame, plus the "
-     "permanence_hotspots boxes."),
+     "tiles covering the hands and anything held, sampled and odd_* alike, plus "
+     "the permanence_hotspots boxes."),
     ("text-and-branding", ["T9"],
-     "EVERY tile, every sampled frame. Nothing is exempt: a wordmark can sit in "
-     "any corner of the frame."),
+     "EVERY tile, sampled and odd_* alike. Nothing is exempt: a wordmark can sit "
+     "in any corner of the frame, and can garble for only a few frames."),
     ("scene-and-optics", ["T10", "T12"],
-     "tiles outside the subject box, every sampled frame."),
+     "tiles outside the subject box, sampled and odd_* alike."),
     ("tail", ["T8"],
      "tiles at the LAST sampled frame and the right-hand end of every strip, "
      "plus motion_by_block."),
@@ -114,24 +162,25 @@ PLAN = [
      "strip_col_* through the head during a pause in the action. Real heads never "
      "hold a line even when 'still'."),
     ("T4", "Mask face", "-",
-     "tiles on the face across the clip: does anything above the eyes move? Watch "
-     "muted and try to name the stressed word."),
+     "tiles on the face, sampled and odd_* alike: does anything above the eyes "
+     "move? Watch muted and try to name the stressed word."),
     ("T5", "Mannequin gaze", "-",
-     "tiles on the eye region at each sampled frame. Look for saccades and for "
+     "tiles on the eye region, sampled and odd_* alike. Look for saccades and for "
      "counter-rotation when the head turns."),
     ("T6", "Thin-prop topology", "permanence_hotspots",
-     "tiles covering the prop at every sampled frame; trace it end to end in each "
-     "and confirm the count of strands and the route between hands is the same."),
+     "tiles covering the prop, sampled and odd_* alike; trace it end to end in "
+     "each and confirm the strand count and the route between hands hold. odd_* "
+     "is where a brief re-route shows."),
     ("T7", "Contactless hold", "-",
-     "tiles on the grip. Look for fingertip flattening, skin blanching and a dark "
-     "contact line. Absence of all three is the tell."),
+     "tiles on the grip, sampled and odd_* alike. Look for fingertip flattening, "
+     "skin blanching and a dark contact line. Absence of all three is the tell."),
     ("T8", "End-loaded collapse", "motion_by_block",
      "the LAST block first: tiles at the final sampled frame, and the right-hand "
      "end of every strip. Compare the last motion_by_block entry with the first."),
     ("T9", "Garbled text", "-",
-     "every tile of the tiles sweep, at each sampled frame. Read every string "
-     "aloud; a logo that is legible in one frame and mush in the next is the "
-     "failure, so compare the same tile across frames."),
+     "EVERY tile, sampled and odd_* alike. Read every string aloud; a logo "
+     "legible in one frame and mush in the next is the failure, so compare a "
+     "tile against its own odd_* frame."),
     ("T10", "Art-directed background", "-",
      "tiles outside the subject box. List what is there and ask whether a set "
      "dresser chose it. Real rooms contain irrelevant ugly objects."),
@@ -164,9 +213,10 @@ def plan(path, ref=None):
            f"    python tools/vq.py measure {ref or 'REF'} {path}",
            "",
            "Coverage: the strips include every frame; the tiles include every "
-           "pixel of each sampled frame. Work the list in order and record a "
-           "verdict for each, including the ones you cleared - an item with no "
-           "verdict has not been swept.",
+           "pixel of each sampled frame, plus each tile at its own worst moment, "
+           "found by scanning all frames (`odd_*`). Work the list in order and "
+           "record a verdict for each, including the ones you cleared - an item "
+           "with no verdict has not been swept.",
            "",
            "| id | pitfall | signal | how to sweep it |",
            "|---|---|---|---|"]

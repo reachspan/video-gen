@@ -54,8 +54,20 @@ waver.
 4x. Every pixel lands in exactly one tile, and the grid is the same one `vq.py`
 scores, so a `permanence_hotspots` entry names the tile to open.
 
+A few sampled frames would leave a brief defect free to fall between them — a
+wordmark that garbles for half a second, a grip that breaks and recovers. So each
+tile additionally gets its **own worst moment**, found by scanning every frame and
+scoring `|2·f(t) − f(t−k) − f(t+k)|`: steady drift and steady motion cancel, and
+what survives is the moment a region stops behaving like itself. Those land as
+`odd_t<ij>_f<frame>.png`. The number of images stays fixed; the search behind them
+covers the whole clip.
+
 Anything you cannot resolve at 4x is **"cannot tell"**, never "fine". A defect
 claimed from a whole-frame view is a hypothesis until it survives its tile.
+
+**What can still slip through:** a defect that is small, brief, *and* not the most
+anomalous moment in its own tile. This makes a sweep bounded, repeatable and honest
+about where it looked — not infallible.
 
 ## What the metrics are for
 
