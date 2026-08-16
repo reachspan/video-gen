@@ -128,9 +128,9 @@ and feed it in as an additional reference:
 - a costume or a specific material
 - anything you have already failed to get right in text twice
 
-Reference images are cheap (2 credits on `nano_banana_pro`). A round of image
-iteration costs a fraction of one video generation and removes the ambiguity that
-would otherwise be re-rolled on every attempt.
+Stills are cheap relative to video. A round of image iteration costs a fraction of
+one video generation and removes an ambiguity that would otherwise be re-rolled on
+every attempt.
 
 ### Other user changes
 

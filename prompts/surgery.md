@@ -13,24 +13,22 @@ that re-routes, a hand that breaks and recovers, a tail that collapses.
 
 ## Why patch instead of regenerating
 
-Not primarily cost. **No Seedance endpoint exposes a seed**, so a full regeneration
-re-rolls every element of the shot — the framing that was right, the performance that
-was right, the set dressing that was right. Documented reject ratio on real
-production is 64:1. A patch keeps everything that already works and re-rolls only the
-span that does not.
+Not primarily cost. **No Seedance endpoint has exposed a seed**, so a full
+regeneration re-rolls every element of the shot — the framing that was right, the
+performance that was right, the set dressing that was right. Documented reject ratio
+on real production is 64:1. A patch keeps everything that already works and re-rolls
+only the span that does not. Check whether the endpoint you are using still lacks a
+seed; if one appears, this argument weakens considerably.
 
-Cost is a secondary argument and it is close:
+Cost is secondary and the comparison is close. A patch costs a fixed amount set by
+the minimum duration, whatever the clip's length, while a full regeneration scales
+with it — so patching wins on longer clips and loses on short ones. Price both before
+deciding rather than assuming:
 
-| | credits |
-|---|---|
-| `seedance_2_5` 720p, 4s (the minimum patch) | 26 |
-| `seedance_2_5` 720p, per second | ~6.5 |
-| `seedance_2_0` 720p 5s (full regen) | 22.5 |
+    higgsfield generate cost <model> --prompt "x" --duration <n> --resolution 720p
 
-A patch is a flat 26 regardless of how long the clip is, so it beats a full 2.5
-regeneration above ~4s and loses to a fresh 2.0 generation on a short clip. If the
-clip is 5s and the defect is everywhere, regenerate. If the clip is 8s and the defect
-is one second of it, patch.
+If the clip is short and the defect is everywhere, regenerate. If the clip is long
+and the defect is a second of it, patch.
 
 ## 1. Localize precisely
 
@@ -83,20 +81,23 @@ Negatives go inline: there is no `negative_prompt` on any Seedance endpoint.
 
 ## 4. Generate
 
-    higgsfield generate create seedance_2_5 \
-      --mode omni_reference \
+Use a model that accepts a start frame **and** an end frame. Confirm which modes and
+parameters the current one exposes before building the call — anchor frames have been
+restricted to a specific reference mode rather than available in plain text-to-video:
+
+    higgsfield model get <model>
+
+    higgsfield generate create <model> \
+      --mode <the mode that accepts anchors> \
       --prompt "$(cat patch.txt)" \
       --start-image a.png --end-image b.png \
-      --duration 4 --resolution 720p --aspect_ratio 9:16 \
-      --bitrate_mode high --generate-audio=false --wait
+      --duration <minimum> --resolution 720p --aspect_ratio 9:16 --wait
 
-`start_image` and `end_image` are accepted **only** in `omni_reference` mode.
+**Turn audio generation off** if it defaults on. The patch would otherwise arrive
+with its own invented audio and you would be splicing an audio seam as well as a
+picture one; keep the original track and lay the patched picture under it.
 
-Set `generate_audio` false. The patch would otherwise arrive with its own invented
-audio and you would be splicing an audio seam as well as a picture one; keep the
-original track and lay the patched picture under it.
-
-No seed means A/B needs N per arm, not pairs. Budget several attempts.
+Without a seed, A/B needs N per arm, not pairs. Budget several attempts.
 
 ## 5. Check the patch before splicing
 
@@ -129,6 +130,7 @@ The tail package matters especially: splicing changes where the clip's end sits.
 
 ## Adjacent tools
 
-`seedance_2_5` also offers `video_edit` (one video reference) and `video_extension`
-(`extension_mode` `backward` or `forward`) for lengthening rather than repairing.
-Neither takes anchor frames, so neither guarantees a splice will line up.
+Video-edit and video-extension modes exist alongside this one, for altering or
+lengthening a clip rather than repairing a span of it. Neither takes anchor frames,
+so neither guarantees a splice will line up — check what the current model offers,
+but prefer anchors whenever the result has to rejoin existing footage.

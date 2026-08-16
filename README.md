@@ -57,9 +57,9 @@ and decides — nothing else decides anything.
     python tools/gate.py targets/X.intent.json targets/X.v3.txt
 
     # 2. generate
-    higgsfield generate create seedance_2_0 --prompt "$(cat targets/X.v3.txt)" \
+    higgsfield generate create <model> --prompt "$(cat targets/X.v3.txt)" \
       --image char.png --video ref.mp4 --duration 5 --resolution 720p \
-      --aspect_ratio 9:16 --bitrate_mode high --wait
+      --aspect_ratio 9:16 --wait
 
     # 3. measure against the reference
     python tools/vq.py measure ref.mp4 out.mp4
@@ -81,7 +81,12 @@ where degradation concentrates. Inspect suspected defects as tight crops upscale
 
 ### Cost
 
-Seedance 2.0 720p is 22.5 credits for 5s. Every generative edit path costs more
-than a full regeneration (`video_edit` 26.5, `draw_to_video` 26.5, `reframe`
-28.5), and none is reproducible, since no Seedance endpoint exposes a seed.
-Signal-level fixes belong in `post.py`; only semantic changes justify a regen.
+Generative edit paths have consistently cost more than a full regeneration, and
+none is reproducible while no endpoint exposes a seed. Signal-level fixes belong
+in `post.py`, which is free; only semantic changes justify a regeneration.
+
+Price before committing to a run rather than working from remembered figures —
+models and rates turn over quickly:
+
+    higgsfield model list --video
+    higgsfield generate cost <model> --prompt "x" --duration 5 --resolution 720p

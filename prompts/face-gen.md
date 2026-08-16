@@ -14,24 +14,18 @@ the model's prior for "man" is a good-looking man.
 Pinning identity to an image fixes the drift and shortens the video prompt, which
 leaves room for the things only text can carry — premise, blocking, performance.
 
-## Model and cost
+## Picking a model
 
-`nano_banana_pro` at 2 credits an image. It is the character/reference model and it
-is cheap enough to iterate honestly — generate several, reject most.
+Use whichever current image model is oriented at character and reference work rather
+than at text or graphic design. List what is available and check what it accepts:
 
-    higgsfield generate create nano_banana_pro \
-      --prompt "$(cat face.txt)" --aspect_ratio 9:16 --resolution 2k --wait
+    higgsfield model list --image
+    higgsfield model get <model>
+    higgsfield generate cost <model> --prompt "..."
 
-`gpt_image_2` (7 credits) is the better choice only when the image must contain
-legible text or graphic design, which a character reference should not.
-
-## Never generate a real person
-
-Do not build a reference intended to resemble a specific real individual, and do not
-work from a photograph of one without their consent. If the user supplies a likeness
-and cannot confirm it is theirs or cleared, generate an unrelated face instead and
-say that is what you did. "Make him look like <public figure>" is a request to
-decline; "make him look like a fifty-year-old electrician from Leeds" is not.
+Stills are cheap relative to video — cheap enough to iterate honestly, so generate
+several and reject most. Confirm the current price before a long run rather than
+assuming; the model lineup turns over quickly.
 
 ## Writing the prompt
 
@@ -99,7 +93,7 @@ StyleGAN-era artifact that diffusion models do not produce.
 ## Steering from the user
 
 When the user asks for changes, edit the prompt and regenerate rather than accepting
-drift — at 2 credits it is cheaper to re-roll than to negotiate. Keep the approved
+drift — a still is cheap enough that re-rolling beats negotiating. Keep the approved
 image as a file and reuse **the exact same file** in every downstream generation;
 regenerating "the same" character produces a different person.
 
