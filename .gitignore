@@ -9,3 +9,6 @@
 __pycache__/
 *.pyc
 .venv/
+
+# dev-only, not published
+HANDOFF.md
