@@ -53,7 +53,7 @@ def strips(path, outdir):
         img = F[:, y, :, :]                                  # (n, w, 3)
         img = cv2.resize(np.transpose(img, (1, 0, 2)), (max(n * 3, 480), w),
                          interpolation=cv2.INTER_NEAREST)
-        p = os.path.join(outdir, f"strip_row_{y:04d}.png")
+        p = os.path.join(outdir, f"strip_row_{y:04d}.jpg")
         cv2.imwrite(p, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
         made.append(p)
     for k in range(1, NSTRIP + 1):
@@ -61,7 +61,7 @@ def strips(path, outdir):
         img = F[:, :, x, :]                                  # (n, h, 3)
         img = cv2.resize(np.transpose(img, (1, 0, 2)), (max(n * 3, 480), h),
                          interpolation=cv2.INTER_NEAREST)
-        p = os.path.join(outdir, f"strip_col_{x:04d}.png")
+        p = os.path.join(outdir, f"strip_col_{x:04d}.jpg")
         cv2.imwrite(p, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
         made.append(p)
     return made
@@ -72,7 +72,8 @@ def _crop(im, i, j, out):
     th, tw = h // ROWS, w // COLS
     c = im[i * th:(i + 1) * th, j * tw:(j + 1) * tw]
     c = cv2.resize(c, (tw * ZOOM, th * ZOOM), interpolation=cv2.INTER_LANCZOS4)
-    cv2.imwrite(out, cv2.cvtColor(c, cv2.COLOR_RGB2BGR))
+    cv2.imwrite(out, cv2.cvtColor(c, cv2.COLOR_RGB2BGR),
+                [cv2.IMWRITE_JPEG_QUALITY, 95])
     return out
 
 
@@ -120,11 +121,11 @@ def tiles(path, outdir, nframes=3):
         for i in range(ROWS):
             for j in range(COLS):
                 made.append(_crop(got[f], i, j,
-                                  os.path.join(outdir, f"f{f:04d}_t{i}{j}.png")))
+                                  os.path.join(outdir, f"f{f:04d}_t{i}{j}.jpg")))
     for (i, j), f in sorted(odd.items()):
         if f not in idx:
             made.append(_crop(got[f], i, j,
-                              os.path.join(outdir, f"odd_t{i}{j}_f{f:04d}.png")))
+                              os.path.join(outdir, f"odd_t{i}{j}_f{f:04d}.jpg")))
     return made
 
 
@@ -144,7 +145,9 @@ PACKAGES = [
      "tiles covering the hands and anything held, sampled and odd_* alike, plus "
      "the permanence_hotspots boxes."),
     ("scene-and-optics", ["T10", "T12", "T9"],
-     "tiles outside the subject box, sampled and odd_* alike."),
+     "tiles outside the subject box, sampled and odd_* alike. If subject_box "
+     "covers most of the frame there may be very few; say how many you had, and "
+     "judge those."),
     ("remaining-tiles", ["T9"],
      "every tile no other package claimed. This is the coverage backstop — a "
      "wordmark can sit in any corner of the frame."),

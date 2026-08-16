@@ -2,6 +2,7 @@
 """Video I/O shared by the measurement and post-processing tools."""
 import av
 import numpy as np
+from scipy import ndimage
 
 
 def probe(path):
@@ -104,6 +105,27 @@ def luma(F):
     return F[..., 0] * .299 + F[..., 1] * .587 + F[..., 2] * .114
 
 
-def keyframes(path):
-    with av.open(path) as c:
-        return [i for i, f in enumerate(c.decode(video=0)) if f.key_frame]
+BANDS = ((0, 64), (64, 128), (128, 192), (192, 256))
+
+
+def luma_profile(F, min_px=20000):
+    """Noise level in flat regions, per luma band. None where a band is too small
+    to estimate.
+
+    Flatness is ranked WITHIN each band. A single global gradient threshold selects
+    almost only shadow and starves the bright bands to a handful of pixels, turning
+    their estimate into numerical noise.
+    """
+    Y = luma(F)
+    res = Y - ndimage.gaussian_filter(Y, (0, 1, 1))
+    grad = ndimage.gaussian_gradient_magnitude(Y, (0, 1.5, 1.5))
+    out = []
+    for lo, hi in BANDS:
+        inband = (Y >= lo) & (Y < hi)
+        if inband.sum() < min_px:
+            out.append(None)
+            continue
+        v = res[inband][grad[inband] < np.percentile(grad[inband], 40)]
+        out.append(float(1.4826 * np.median(np.abs(v - np.median(v))))
+                   if v.size else 0.0)
+    return out

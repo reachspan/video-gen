@@ -62,7 +62,6 @@ and decides — nothing else decides anything.
 
     # 3. measure against the reference
     python tools/vq.py measure ref.mp4 out.mp4
-    python tools/vq.py viz motion.png ref.mp4 out.mp4
 
     # 4. sweep every pitfall, red team in parallel, blind judges, decide
     #    — the whole procedure lives in prompts/judge.md

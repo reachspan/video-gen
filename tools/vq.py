@@ -2,7 +2,6 @@
 """Signal measurement against a reference clip.
 
   vq.py measure REF CAND...   metrics; first file is the reference
-  vq.py viz OUT.png VIDEO...  motion rendered as stills
 
 JSON on stdout, comparison table on stderr.
 
@@ -34,9 +33,8 @@ import json, os, sys
 from multiprocessing import Pool
 import cv2
 import numpy as np
-from scipy import ndimage
 from skimage.metrics import structural_similarity as ssim
-from vid import read, probe, luma, keyframes, count, spread, blocks, read_at
+from vid import probe, luma, luma_profile, count, spread, blocks, read_at
 
 # Photometric stats and the subject mask share NSAMPLE frames spread across the
 # whole clip. Adjacent-frame metrics cannot use a spread, so they read NBLOCK
@@ -80,9 +78,7 @@ def subject_box(A, guard=0.60):
 def measure(path):
     m = {"file": path.split("/")[-1]}
     p = probe(path)
-    kf = keyframes(path)
-    m |= {"fps": round(p["fps"], 2), "kbps": p["kbps"],
-          "gop": (kf[1] - kf[0]) if len(kf) > 1 else None}
+    m |= {"fps": round(p["fps"], 2), "kbps": p["kbps"]}
 
     n = count(path)
     sidx = spread(n, NSAMPLE)
@@ -96,23 +92,8 @@ def measure(path):
     F = np.stack([frames[i] for i in sidx])
     Y = luma(F)
 
-    # grain: real sensors peak in the low-mids, not the deep shadows.
-    # Flatness is ranked WITHIN each luma band. A single global gradient
-    # threshold selects almost only shadow, starving the bright bands to a
-    # handful of pixels and turning their MAD into numerical noise.
-    res = Y - ndimage.gaussian_filter(Y, (0, 1, 1))
-    grad = ndimage.gaussian_gradient_magnitude(Y, (0, 1.5, 1.5))
-    mad = lambda x: float(1.4826 * np.median(np.abs(x - np.median(x)))) if x.size else 0.0
-
-    prof = []
-    for lo, hi in ((0, 64), (64, 128), (128, 192), (192, 256)):
-        inband = (Y >= lo) & (Y < hi)
-        if inband.sum() < 20000:
-            prof.append(None)
-            continue
-        g, r = grad[inband], res[inband]
-        prof.append(round(mad(r[g < np.percentile(g, 40)]), 3))
-    m["noise_by_luma"] = prof
+    prof = luma_profile(F)
+    m["noise_by_luma"] = [x if x is None else round(x, 3) for x in prof]
     # Signed trend of noise across the luma range, per 100 levels, normalised by
     # mean noise so it does not move with overall grain magnitude. Unlike the
     # max/min ratio this keeps the ORDER of the bands, which is the part that
@@ -300,46 +281,21 @@ def measure(path):
     return m
 
 
-KEYS = ["fps", "kbps", "gop", "noise_luma_slope", "clip_high_pct",
+KEYS = ["fps", "kbps", "noise_luma_slope", "clip_high_pct",
         "clip_low_pct", "displacement_px", "motion_mean", "ssim_min",
         "subject_stillness", "subject_vs_background", "permanence_mean_ncc",
         "permanence_worst_ncc", "permanence_chroma_worst"]
 
 
-def viz(out, paths):
-    rows, rep = [], {}
-    for p in paths:
-        F = read(p)[::3]
-        F = np.stack([cv2.resize(f, (300, int(300 * f.shape[0] / f.shape[1])))
-                      for f in F])
-        Y = luma(F)
-        dev = np.abs(Y - Y[0]).max(0)          # anything black here never moved
-        con = np.abs(np.diff(Y, axis=0)).mean(0)
-        n = lambda a, g: np.clip(a * g, 0, 255).astype(np.uint8)
-        rows.append(np.concatenate([F[0], np.stack([n(dev, 3.0)] * 3, -1),
-                                    np.stack([n(con, 12.0)] * 3, -1)], axis=1))
-        s = np.abs(np.diff(Y, axis=0)).mean((1, 2))
-        rep[p.split("/")[-1]] = {
-            "motion_p10_50_90": [round(float(np.percentile(s, q)), 2) for q in (10, 50, 90)],
-            "burstiness_cv": round(float(s.std() / (s.mean() + 1e-9)), 3)}
-    W = max(r.shape[1] for r in rows)
-    rows = [np.pad(r, ((0, 0), (0, W - r.shape[1]), (0, 0))) for r in rows]
-    cv2.imwrite(out, cv2.cvtColor(np.concatenate(rows, 0), cv2.COLOR_RGB2BGR))
-    return rep
-
-
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 3 or sys.argv[1] != "measure":
         sys.exit(__doc__)
-    cmd = sys.argv[1]
-    if cmd == "viz":
-        print(json.dumps(viz(sys.argv[2], sys.argv[3:]), indent=1))
     else:
         paths = sys.argv[2:]
         # Clips are independent, so measure them in parallel. Each result is
-        # identical to the serial one; only the wall clock changes.
-        # Each worker holds a few hundred MB of decoded frames, so the cap is set
-        # by memory rather than by core count. VQ_JOBS overrides it.
+        # identical to the serial one; only the wall clock changes. Each worker
+        # holds a few hundred MB of decoded frames, so the cap is set by memory
+        # rather than by core count. VQ_JOBS overrides it.
         jobs = int(os.environ.get("VQ_JOBS", 0)) or min(4, os.cpu_count() or 1)
         if len(paths) > 1 and jobs > 1:
             with Pool(min(len(paths), jobs)) as pool:

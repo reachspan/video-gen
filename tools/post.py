@@ -13,9 +13,14 @@ import subprocess, sys
 import cv2
 import numpy as np
 from scipy import ndimage
-from vid import read, write, probe, luma, count, spread, blocks, read_at
+from vid import read, write, probe, luma, luma_profile, count, spread, blocks, read_at
 
 RNG = np.random.default_rng(7)
+
+
+def profile(F):
+    """Per-band noise, with unmeasurable bands read as zero so the fit is defined."""
+    return [0.0 if v is None else v for v in luma_profile(F)]
 
 
 def sample(path, k):
@@ -26,7 +31,6 @@ def sample(path, k):
     return np.stack([f[i] for i in idx])
 
 
-BANDS = ((0, 64), (64, 128), (128, 192), (192, 256))
 CENTRES = np.array([32, 96, 160, 224], float)
 
 
@@ -159,31 +163,10 @@ def shake(cand, out=None, amp=None, ref=None):
     return G
 
 
-def luma_profile(F):
-    """Noise level in flat regions, per luma band.
-
-    Flatness is ranked within each band; a global gradient threshold selects
-    almost only shadow and leaves the bright bands with too few pixels to measure.
-    """
-    Y = luma(F)
-    res = Y - ndimage.gaussian_filter(Y, (0, 1, 1))
-    g = ndimage.gaussian_gradient_magnitude(Y, (0, 1.5, 1.5))
-    p = []
-    for lo, hi in BANDS:
-        inband = (Y >= lo) & (Y < hi)
-        if inband.sum() < 20000:
-            p.append(0.0)
-            continue
-        gb, rb = g[inband], res[inband]
-        v = rb[gb < np.percentile(gb, 40)]
-        p.append(float(1.4826 * np.median(np.abs(v - np.median(v)))) if v.size else 0.0)
-    return p
-
-
 def grain(ref, cand, out=None):
     """Add noise weighted by the reference's per-luma-band profile."""
-    want, C = luma_profile(sample(ref, 32)), read(cand)
-    have = luma_profile(C)
+    want, C = profile(sample(ref, 32)), read(cand)
+    have = profile(C)
     print(f"reference  {[round(v, 3) for v in want]}")
     print(f"candidate  {[round(v, 3) for v in have]}")
     w = np.interp(luma(C), CENTRES, np.maximum(np.subtract(want, have), 0))
@@ -191,7 +174,7 @@ def grain(ref, cand, out=None):
     z = ndimage.gaussian_filter(z, (0, 0.5, 0.5))
     z /= z.std() + 1e-9
     G = np.clip(C.astype(np.float32) + (z * w)[..., None], 0, 255).astype(np.uint8)
-    print(f"grained    {[round(v, 3) for v in luma_profile(G)]}")
+    print(f"grained    {[round(v, 3) for v in profile(G)]}")
     if out:
         write(G, out, probe(cand)["fps"])
     return G

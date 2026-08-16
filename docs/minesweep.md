@@ -9,9 +9,11 @@ to run, who runs it, and how the answers combine.
     python tools/sweep.py tiles  out.mp4 sweep/     # spatial coverage
     python tools/vq.py measure   ref.mp4 out.mp4    # where to look first
 
-`plan.md` ends with **work packages**: pitfalls bundled by the artifact they need,
-one fresh agent each, run in parallel. The bundling is what makes them independent
-— no two packages open the same evidence, so none blocks another.
+`plan.md` ends with **work packages**: pitfalls bundled by the evidence they need,
+one fresh agent each, run in parallel. Every tile belongs to exactly one package,
+whose agent answers every question that applies to it — text included. That is what
+keeps them parallel; a package defined by theme rather than evidence ends up
+re-opening tiles another package already holds.
 
 ## The problem this solves
 
@@ -59,7 +61,7 @@ wordmark that garbles for half a second, a grip that breaks and recovers. So eac
 tile additionally gets its **own worst moment**, found by scanning every frame and
 scoring `|2·f(t) − f(t−k) − f(t+k)|`: steady drift and steady motion cancel, and
 what survives is the moment a region stops behaving like itself. Those land as
-`odd_t<ij>_f<frame>.png`. The number of images stays fixed; the search behind them
+`odd_t<ij>_f<frame>.jpg`. The number of images stays fixed; the search behind them
 covers the whole clip.
 
 Anything you cannot resolve at 4x is **"cannot tell"**, never "fine". A defect
