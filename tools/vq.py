@@ -7,8 +7,8 @@
 JSON on stdout, comparison table on stderr.
 
 These measure DISTANCE FROM A REFERENCE, not realism. Measured against real phone
-video from two cameras, a generated clip sits inside the real range on every
-metric here, so none of them can decide whether footage is real. What they do is
+video from six cameras, a generated clip sits inside the real range on every metric
+here, so none of them can decide whether footage is real. What they do is
 say where and when a candidate departs from its reference, which is where to look.
 Read a value only against a reference measured in the same run; a quiet metric is
 not a pass. See docs/minesweep.md.
@@ -16,6 +16,10 @@ not a pass. See docs/minesweep.md.
 noise_luma_slope is worth knowing about: it is near-constant per camera, so it
 tests whether two clips share a capture pipeline rather than whether either is
 real.
+
+The noise metrics track BITRATE as much as content - the same clip transcoded from
+6993 to 651 kbps drops noise_sigma_flat by a quarter. Compare them only between
+clips encoded at similar rates; measure prints a note when they are not.
 
 Measures nothing at platform bitrates, do not re-add: lateral chromatic
 aberration, grain advection, raw temporal residual correlation, vignetting.
@@ -354,3 +358,16 @@ if __name__ == "__main__":
                         flag = " !" if abs(val - base) / den > 0.35 else ""
                     line += f"{str(val) + flag:>{w}}"
                 print(line, file=sys.stderr)
+            # Grain survives in proportion to the bits spent on it: the same
+            # content transcoded from 6993 to 651 kbps drops noise_sigma_flat by
+            # a quarter. Comparing a raw generator output against a clip already
+            # squeezed through a platform reads that difference as grain.
+            base_kbps = rs[0].get("kbps") or 0
+            odd = [r["file"] for r in rs[1:]
+                   if base_kbps and r.get("kbps")
+                   and not 0.5 <= r["kbps"] / base_kbps <= 2.0]
+            if odd:
+                print(f"\nnote: bitrate differs from the reference by more than 2x "
+                      f"({', '.join(odd)}).\n      noise_sigma_flat and noise_by_luma "
+                      f"are not comparable across that gap;\n      transcode to a "
+                      f"matching bitrate before reading them.", file=sys.stderr)

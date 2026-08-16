@@ -8,10 +8,15 @@ Severity is **for this format**, not in general.
 
 ## No metric here is a detector
 
-Everything measurable in `tools/vq.py` was calibrated against 8 real 4s segments
-from two phone cameras. **The generated clip lands inside the real range on every
-one of them.** Real footage varies more between cameras, scenes and operators than
-generated footage differs from real.
+Everything measurable in `tools/vq.py` was calibrated against 14 real 4s segments
+from six phone cameras. **The generated clip lands inside the real range on every
+one of them.** Real footage varies more between cameras, scenes, operators and
+bitrates than generated footage differs from real.
+
+Bitrate is the confound to watch. Grain survives in proportion to the bits spent on
+it, so a raw generator output measured against a clip that has been through a
+platform transcode reads that difference as grain. Match bitrates, or read nothing
+into the noise metrics.
 
 So the signal metrics answer one question — *how far is this candidate from this
 particular reference* — and that is what makes them useful for matching, and
@@ -78,7 +83,7 @@ Axes where a generated clip measurably departs from its reference. Useful as
 | Camera motion | generated moves *more* than this reference (0.45 vs 0.28px median inter-frame), but real footage spans 0.25–10.8px, so magnitude alone says nothing | `vq.py` → `displacement_px`, `motion_mean` | `post.py shake` adds only the deficit, so an already-mobile clip is untouched |
 | Highlight behaviour | generated clips less than this reference | `vq.py` → `clip_high_pct`, `clip_low_pct` | prompting does not move it, and pushing harder moves it the wrong way. `post.py exposure` |
 | Liveliness | whether the subject ever falls quiet relative to its own typical motion, and how much more it moves than its backdrop | `vq.py` → `subject_stillness`, `subject_vs_background` | no algorithmic fix; a subject that goes dead between beats needs regenerating. These aggregates are coarse — the slit-scans are the sensitive instrument, so confirm there before acting |
-| Grain magnitude | generated is **noisier** than the reference in every band | `vq.py` → `noise_sigma_flat` | `post.py grain` only adds, so it is the wrong tool here — the gap wants closing from the other side |
+| Grain magnitude | generated reads noisier than a platform-delivered reference, but most of that is **bitrate**: the same clip transcoded from 6993 to 651 kbps drops 25%, and across real footage the metric correlates with bitrate at r≈0.86 | `vq.py` → `noise_sigma_flat` | match bitrates before reading it at all. `post.py grain` only adds noise, so it cannot close a gap in this direction anyway |
 | Grain profile shape | `noise_luma_slope` is near-constant per camera: +0.560 ±0.001 across three unrelated segments of one, negative across every segment of another. Generated reads +0.38 against a +0.56 reference | `vq.py` → `noise_luma_slope`, `noise_by_luma` | tests whether two clips share a capture pipeline; it does not test whether either is real |
 | Object permanence | background tiles drift and morph under motion compensation | `vq.py` → `permanence_worst_ncc`, `permanence_hotspots` | shorter clips; fewer background objects; keep the subject from sweeping across detail |
 | Colour permanence | a patch can stay structurally correlated while changing colour | `vq.py` → `permanence_chroma_worst` | same as above; check the hotspot box by eye before acting |
