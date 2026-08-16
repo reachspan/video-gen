@@ -26,6 +26,62 @@ def read(path, n=None, gray=False, start=0):
     return np.asarray(out)
 
 
+def count(path):
+    """Frame count. The container header is trusted when it has one."""
+    with av.open(path) as c:
+        n = c.streams.video[0].frames
+    if n:
+        return int(n)
+    with av.open(path) as c:                       # header lied; count them
+        return sum(1 for _ in c.decode(video=0))
+
+
+def spread(n, k):
+    """k indices evenly across [0, n), including the first and last frame.
+
+    Sampling the FIRST k frames instead biases every statistic toward the head of
+    the clip, which is exactly where generated video looks best - degradation is
+    end-loaded.
+    """
+    if n <= 0:
+        return []
+    if k >= n:
+        return list(range(n))
+    return sorted({int(round(i * (n - 1) / (k - 1))) for i in range(k)})
+
+
+def blocks(n, nblocks, blocklen):
+    """nblocks contiguous runs of blocklen frames, spread across the clip with
+    one anchored at the tail.
+
+    Metrics comparing ADJACENT frames (displacement, frame-to-frame energy, SSIM)
+    are only meaningful on genuinely consecutive frames, so they cannot use
+    spread(). Contiguous blocks keep adjacency while still covering the whole
+    clip, tail included.
+    """
+    blocklen = min(blocklen, n)
+    if nblocks < 2 or n <= blocklen:
+        return [list(range(blocklen))]
+    starts = sorted({int(round(i * (n - blocklen) / (nblocks - 1)))
+                     for i in range(nblocks)})
+    return [list(range(s, s + blocklen)) for s in starts]
+
+
+def read_at(path, idx):
+    """Decode once, keep only the requested indices. Returns {index: RGB frame}."""
+    want = set(idx)
+    if not want:
+        return {}
+    last, out = max(want), {}
+    with av.open(path) as c:
+        for i, f in enumerate(c.decode(video=0)):
+            if i in want:
+                out[i] = f.to_ndarray(format="rgb24")
+            if i >= last:
+                break
+    return out
+
+
 def write(frames, path, fps, crf=12):
     """Encode (T, H, W, 3) uint8 to H.264."""
     frames = np.ascontiguousarray(frames, np.uint8)

@@ -1,30 +1,95 @@
-# Blind judge prompts
+# Quality check — entry point
 
-Spawn a FRESH agent per judge. Never reuse a judge that has seen the intent spec,
-the prompt, or this conversation — a judge that knows the answer will find it.
+**Start here to evaluate a generated clip.** This file owns the procedure: what to
+run, in what order, who does it, and how the answers combine into one decision.
 
-## Resolution discipline — read before writing any judge prompt
+Everything else is a component with one job:
 
-Images are resized on the way into a model's context. A full 720x1280 frame, or a
-large crop of one, arrives downsampled, and **anatomy and small-text defects get
-invented at low resolution**. Fine detail must be delivered as a tight crop of a
-small region, upscaled, one region per image:
-
-    ffmpeg -ss 2 -i clip.mp4 -vf "crop=250:290:30:640,scale=1000:1160:flags=lanczos" \
-      -frames:v 1 -q:v 2 region.jpg
-
-Every judge prompt must instruct this explicitly. Treat any defect claimed from a
-whole-frame view as a hypothesis to re-check at 4x before acting on it. Hands,
-fingers, tool branding and text have all produced false positives this way.
-
-Always run each judge on the **original as a control** in the same batch, with the
-files shuffled and unlabelled. If a judge recovers the premise from the original
-but not from the candidate, that is a clean differential. If it recovers neither,
-the judge or the framing is at fault, not the candidate.
+| file | job | does NOT |
+|---|---|---|
+| `tools/gate.py` | prompt vs intent, before generating | look at pixels |
+| `tools/vq.py` | signal measurement against a reference | decide anything |
+| `tools/sweep.py` | build inspection artifacts, emit the checklist | judge them |
+| `docs/pitfalls.md` | catalogue of what goes wrong in this format | say how to sweep |
+| `docs/minesweep.md` | how to read the artifacts, and why they cover the clip | list pitfalls |
+| this file | run the check, dispatch the agents, consolidate | measure |
 
 ---
 
-## J1 — semantic reconstruction (catches the v1 class of failure)
+## Stage 0 — before spending credits
+
+    python tools/gate.py targets/X.intent.json targets/X.v4.txt
+
+A prompt that fails the gate is not worth generating. Nothing below applies yet.
+
+## Stage 1 — build the evidence
+
+    python tools/vq.py measure   ref.mp4 out.mp4 > measure.json
+    python tools/sweep.py plan   out.mp4 ref.mp4 > plan.md
+    python tools/sweep.py strips out.mp4 sweep/
+    python tools/sweep.py tiles  out.mp4 sweep/
+
+Read `warnings` in `measure.json` first. A metric carrying a warning is not
+evidence, and a hotspot on a clip whose alignment mostly failed is not a location.
+
+## Stage 2 — red team, in parallel
+
+`plan.md` ends with a table of **work packages**. Spawn **one fresh agent per
+package, all at once**. They are independent by construction: the packages are cut
+along the artifact each needs, so no two agents examine the same evidence and none
+waits on another.
+
+Give each agent exactly this, and nothing else:
+
+- its package name, its pitfall ids, and their rows from `plan.md`
+- the paths to the artifacts it needs, and `measure.json`
+- the resolution rule below
+
+Do **not** give a red-team agent the intent spec or the prompt. An agent told what
+the shot is meant to contain will confirm it is there.
+
+> Inspect at magnification. A whole frame arrives downsampled in your context and
+> you will invent defects that are not there. The tiles in `sweep/` are already at
+> 4x — open those, do not re-crop the full frame. For anything smaller than a hand,
+> confirm it in the tile before reporting it.
+>
+> Report `cannot_tell` when you cannot resolve something at 4x. It is a real answer
+> and it is expected; `clear` means you looked and it was fine.
+>
+> Return an entry for EVERY pitfall in your package, including the ones you cleared.
+> JSON: {package, findings: [{pitfall, verdict: defect|clear|cannot_tell, where,
+> evidence, severity_1_5}]}.
+
+`where` must be a frame number and a tile or box, so a finding can be re-opened.
+
+## Stage 3 — blind judges, also in parallel
+
+These are separate from the red team: they answer whether the clip *works*, not
+whether it is flawed. Run each on the candidate **and on the original as a control**,
+in the same batch, shuffled and unlabelled. A judge that has seen the intent spec,
+the prompt, or this conversation will find the answer it was given.
+
+If a judge recovers the premise from the original but not the candidate, that is a
+clean differential. If it recovers neither, the judge or the framing is at fault,
+not the candidate.
+
+```bash
+python3 - <<'EOF'
+import random, json, shutil, pathlib
+files = ["dl/orig_4s.mp4", "gen/v4.mp4"]          # extend as needed
+names = ["clip_a.mp4", "clip_b.mp4"]
+random.shuffle(files)
+pathlib.Path("blind").mkdir(exist_ok=True)
+for src, dst in zip(files, names):
+    shutil.copy(src, f"blind/{dst}")
+json.dump(dict(zip(names, files)), open("blind/KEY.json", "w"))   # do not read yet
+EOF
+```
+
+Hand `blind/clip_a.mp4` and `blind/clip_b.mp4` to separate fresh agents, collect
+verdicts, and only then open `KEY.json`.
+
+### J1 — semantic reconstruction
 
 > You are shown a short vertical video. Watch it and answer plainly, from the video
 > alone. Do not guess at what it might be intended to be.
@@ -44,58 +109,74 @@ the judge or the framing is at fault, not the candidate.
 > If you cannot answer any question from the video, say "cannot tell" rather than
 > inferring. Return JSON: {happening, prop_and_why, edges, purpose, mood}.
 
-**Pass condition:** the answer to (4) recovers coercion/duress/hostage-parody
-without prompting, and (5) is not positive-valence.
+**Pass:** (4) recovers coercion/duress/hostage-parody unprompted, and (5) is not
+positive-valence.
 
----
-
-## J2 — is it camera-captured (adversarial)
+### J2 — is it camera-captured (adversarial)
 
 > You are shown a short vertical video. Your job is to decide whether it was filmed
 > on a real camera or generated. Default to "generated" if you are uncertain — a
 > confident wrong "real" is the expensive error.
 >
-> Look specifically at: whether sharpness falls off toward the frame corners the way
-> a lens behaves; whether the bright window clips to featureless white the way a
-> sensor does; whether the camera drifts and gets corrected like a hand, or jitters
-> randomly; whether background objects stay put; hands, and whether fingers keep the
-> same count and the grip stays consistent; whether anything morphs when occluded.
+> Look specifically at: whether the camera drifts and gets corrected like a hand, or
+> jitters randomly; whether background objects stay put, keep their shape, and keep
+> their colour; hands, and whether fingers keep the same count and the grip stays
+> consistent; whether anything morphs when occluded and re-emerges changed; whether
+> thin objects (cable, wire, straps) keep a traceable path end to end.
+>
+> Do **not** treat corner sharpness falloff or highlight clipping as evidence either
+> way. Both were measured across real phone footage and vary more between real clips
+> than between real and generated ones.
 >
 > Return JSON: {verdict: real|generated, confidence: 0-1, strongest_evidence: [...]}.
 
-**Pass condition:** verdict "real", or "generated" with confidence < 0.6 and no
-evidence item that a post pass cannot fix.
+**Pass:** "real", or "generated" with confidence < 0.6 and no evidence item that a
+post pass cannot fix.
 
----
+### J3 — domain plausibility
 
-## J3 — trade plausibility
+Generic by design. A judge told the domain up front will confirm it; let it infer
+the domain from the video, then critique from inside that domain.
 
-> You are shown a short vertical video of someone at a building site or workshop.
-> Assume you are a working electrician or builder. What in this video would make you
-> wince or look twice? Consider tools, wiring, materials, workwear, and whether the
-> work shown makes sense. Return JSON: {issues: [{what, severity_1_5}], verdict}.
+> You are shown a short vertical video. Watch it and answer in two steps.
+>
+> First: what setting is this, and what occupation, hobby or activity does the person
+> appear to be engaged in? Name it as specifically as the video supports.
+>
+> Second: assume you are an experienced practitioner of exactly that thing, with years
+> on the job. What in this video would make you wince, squint, or say "that's not how
+> you'd do it"? Consider the tools and equipment and whether they are the ones actually
+> used; whether they are held, worn and operated correctly; whether they are the right
+> size for the task and the person; clothing and protective gear; the state of the
+> workspace; branding and labelling on anything visible; and whether the activity shown
+> would accomplish anything.
+>
+> Inspect at magnification before reporting any detail of an object, logo or text —
+> a whole frame arrives downsampled and you will invent faults that are not there:
+> `ffmpeg -ss 2 -i clip.mp4 -vf "crop=250:290:30:640,scale=1000:1160" -frames:v 1 r.jpg`
+> If you cannot resolve it at 4x, say "cannot tell" instead of reporting it.
+>
+> Rate each issue 1-5, where 5 = a practitioner would immediately know this was staged
+> by someone who has never done the job, and 1 = a harmless quirk. Return JSON:
+> {domain, issues: [{what, severity_1_5, verified_at_4x: true|false}], verdict}.
 
-**Pass condition:** no issue at severity 4+.
+**Pass:** no issue at severity 4+ that is `verified_at_4x`. Read `domain` as a check
+in its own right: if the judge cannot name the setting the shot is supposed to
+establish, the set dressing has failed regardless of the issue list.
 
----
+## Stage 4 — consolidate
 
-## Running them
+Collect every package and every judge into one table: pitfall or judge, verdict,
+where, severity. Then:
 
-Shuffle and strip labels first, and keep the key out of your own context until
-after the verdicts are in:
+- **Any `defect` at severity 4+, or any failed judge** → do not ship. A semantic
+  failure (J1, J3) needs a regeneration; a signal mismatch usually needs `post.py`.
+- **`cannot_tell` on a severity-4-capable pitfall** → resolve it before deciding.
+  Re-crop tighter, or say plainly in the report that it went unresolved.
+- **Everything else clear** → ship, and record what was swept.
 
-```bash
-python3 - <<'EOF'
-import random, json, shutil, pathlib
-files = ["dl/orig_4s.mp4", "gen/v2.mp4"]          # extend as needed
-names = ["clip_a.mp4", "clip_b.mp4"]
-random.shuffle(files)
-pathlib.Path("blind").mkdir(exist_ok=True)
-for src, dst in zip(files, names):
-    shutil.copy(src, f"blind/{dst}")
-json.dump(dict(zip(names, files)), open("blind/KEY.json", "w"))   # do not read yet
-EOF
-```
+The report must name what was **not** resolved. A sweep that reports only defects
+is indistinguishable from one that did not look.
 
-Then hand `blind/clip_a.mp4` and `blind/clip_b.mp4` to separate fresh agents, collect
-verdicts, and only then open `KEY.json`.
+Calibration: the source reel returns *real, 0.85* on J2 and its premise is recovered
+unprompted on J1. That is the bar a candidate has to clear.

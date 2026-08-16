@@ -8,7 +8,7 @@ generation, and measure how close the result is to camera-captured footage.
 Download Instagram reels, posts and carousels. Single file, stdlib only, no dependencies.
 
 ```bash
-./ig-dl <url|shortcode>... [-o DIR] [--cookies FILE] [--json]
+utils/ig-dl <url|shortcode>... [-o DIR] [--cookies FILE] [--json]
 ```
 
 - **stdout** — saved paths, one per line, flushed as they land
@@ -25,14 +25,21 @@ page load and prepend it to `DOC_IDS`.
 
 ## Evaluation suite
 
-    tools/vid.py     video I/O (PyAV decode/encode, probe, luma)
-    tools/vq.py      measurement: 18 metrics + motion rendered as stills
+    prompts/judge.md ENTRY POINT — the quality-check procedure, start here
+    utils/ig-dl      reference-clip downloader
+    tools/vid.py     video I/O (PyAV decode/encode, probe, sampling)
+    tools/vq.py      measurement: reference-relative signal metrics
+    tools/sweep.py   inspection sweep: slit-scans, 4x tiles, per-pitfall checklist
     tools/post.py    algorithmic post: exposure, shake, grain
     tools/gate.py    semantic pre-flight checks on a prompt
-    prompts/judge.md blind-judge prompts, run with the original as control
-    targets/         per-reel intent spec and prompt
+    tools/selftest.py  injection tests for the metrics
     docs/pitfalls.md tells ranked for this format
+    docs/minesweep.md  how to read the sweep artifacts
     docs/forensics.json  24 forensic tells, 16 remediation techniques
+
+Each piece has one job and no other: `gate.py` reads the prompt, `vq.py` measures
+signal, `sweep.py` builds what gets looked at, and `judge.md` runs the check and
+decides. Nothing but `judge.md` decides anything.
 
 ### Setup
 
@@ -54,10 +61,17 @@ page load and prepend it to `DOC_IDS`.
     python tools/vq.py measure ref.mp4 out.mp4
     python tools/vq.py viz motion.png ref.mp4 out.mp4
 
-    # 4. blind judge, shuffled, original as control (see prompts/judge.md)
+    # 4. sweep every pitfall, red team in parallel, blind judges, decide
+    #    — the whole procedure lives in prompts/judge.md
+    python tools/sweep.py plan   out.mp4 ref.mp4
+    python tools/sweep.py strips out.mp4 sweep/
+    python tools/sweep.py tiles  out.mp4 sweep/
 
 Metrics mean nothing in isolation: pass reference and candidate to one `measure`
-run and read the comparison. Generate ~25% longer than needed and trim the tail,
+run and read the comparison. They measure *distance from this reference*, not
+realism in the abstract — measured against a corpus of real phone video, none of
+them separates generated output from real footage on its own. See
+`docs/pitfalls.md`. Generate ~25% longer than needed and trim the tail,
 where degradation concentrates. Inspect suspected defects as tight crops upscaled
 4x — a full frame arrives downsampled and invents anatomy and text faults.
 
