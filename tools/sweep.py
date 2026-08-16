@@ -128,26 +128,26 @@ def tiles(path, outdir, nframes=3):
     return made
 
 
-# Pitfalls bundled into work packages. One package is one subagent: the grouping
-# follows the artifact each needs, so a package is a coherent job and no two
-# packages fight over the same evidence.
+# Pitfalls bundled into work packages, one package per subagent. Packages are cut
+# by EVIDENCE, not by theme: every tile is read by exactly one agent, which answers
+# every question that applies to it. Cutting by theme instead makes a text pass that
+# must open all 96 tiles, duplicating three other packages and taking five times as
+# long as any of them, which then paces the whole run.
 PACKAGES = [
-    ("motion-and-life", ["T1", "T2", "T3", "T11", "T13"],
-     "strip_* (all of them). You are judging whether the body is alive and "
-     "whether a hand held the camera."),
-    ("face-and-gaze", ["T4", "T5"],
+    ("motion-and-life", ["T1", "T2", "T3", "T8", "T11", "T13"],
+     "strip_* — all of them, candidate and reference — plus motion_by_block. No "
+     "tiles. You are judging whether the body is alive, whether a hand held the "
+     "camera, and whether the tail degrades."),
+    ("face-and-gaze", ["T4", "T5", "T9"],
      "tiles covering the head, sampled and odd_* alike."),
-    ("hands-and-props", ["T6", "T7"],
+    ("hands-and-props", ["T6", "T7", "T15", "T9"],
      "tiles covering the hands and anything held, sampled and odd_* alike, plus "
      "the permanence_hotspots boxes."),
-    ("text-and-branding", ["T9"],
-     "EVERY tile, sampled and odd_* alike. Nothing is exempt: a wordmark can sit "
-     "in any corner of the frame, and can garble for only a few frames."),
-    ("scene-and-optics", ["T10", "T12"],
+    ("scene-and-optics", ["T10", "T12", "T9"],
      "tiles outside the subject box, sampled and odd_* alike."),
-    ("tail", ["T8"],
-     "tiles at the LAST sampled frame and the right-hand end of every strip, "
-     "plus motion_by_block."),
+    ("remaining-tiles", ["T9"],
+     "every tile no other package claimed. This is the coverage backstop — a "
+     "wordmark can sit in any corner of the frame."),
 ]
 
 PLAN = [
@@ -155,9 +155,12 @@ PLAN = [
      "strip_col_* through the torso. A living body wavers; a frozen one draws "
      "straight horizontal lines. Check every column strip, not just the centre."),
     ("T2", "No breathing", "-",
-     "strip_col_* crossing the shoulder line. Count the slow oscillations over "
-     "the clip and divide by its duration: expect 12-20 per minute. A flat edge "
-     "is a held breath, which nobody does for a whole take."),
+     "strip_col_* crossing the shoulder or collar line. Judge the SIGNATURE, not "
+     "a rate: a real chest edge rises and falls continuously, a generated one "
+     "holds a dead flat line. At 12-20 breaths a minute a 4-10s clip contains "
+     "well under two cycles, so a rate is not recoverable and must not be "
+     "reported as one; a sustained flat edge is still a defect, and a wavering "
+     "one still clears."),
     ("T3", "No physiological jitter", "subject_stillness",
      "strip_col_* through the head during a pause in the action. Real heads never "
      "hold a line even when 'still'."),
@@ -165,8 +168,11 @@ PLAN = [
      "tiles on the face, sampled and odd_* alike: does anything above the eyes "
      "move? Watch muted and try to name the stressed word."),
     ("T5", "Mannequin gaze", "-",
-     "tiles on the eye region, sampled and odd_* alike. Look for saccades and for "
-     "counter-rotation when the head turns."),
+     "tiles on the eye region, sampled and odd_* alike. Look for saccades, for "
+     "blinks, and for the eyes repositioning independently of the skull. Counter-"
+     "rotation only applies if the head actually turns: if it never yaws, record "
+     "that sub-test as not applicable and judge on the rest rather than calling "
+     "the whole pitfall cannot_tell."),
     ("T6", "Thin-prop topology", "permanence_hotspots",
      "tiles covering the prop, sampled and odd_* alike; trace it end to end in "
      "each and confirm the strand count and the route between hands hold. odd_* "
@@ -175,8 +181,9 @@ PLAN = [
      "tiles on the grip, sampled and odd_* alike. Look for fingertip flattening, "
      "skin blanching and a dark contact line. Absence of all three is the tell."),
     ("T8", "End-loaded collapse", "motion_by_block",
-     "the LAST block first: tiles at the final sampled frame, and the right-hand "
-     "end of every strip. Compare the last motion_by_block entry with the first."),
+     "the right-hand end of every strip, and the last motion_by_block entry "
+     "against the first. Every package also starts at the final sampled frame of "
+     "its own region, since degradation is end-loaded."),
     ("T9", "Garbled text", "-",
      "EVERY tile, sampled and odd_* alike. Read every string aloud; a logo "
      "legible in one frame and mush in the next is the failure, so compare a "
@@ -196,6 +203,13 @@ PLAN = [
     ("T14", "Beauty bias", "-",
      "cross-clip, not in-clip: put several generations side by side and ask "
      "whether they look more alike than several real people would."),
+    ("T15", "Object scale and placement", "-",
+     "tiles on every held or intruding object. Measure it against the body: a "
+     "hand is ~1 head wide, a cordless drill ~1 head long. Generated objects come "
+     "back oversized and pushed toward the centre of the frame, because that is "
+     "where the model believes the subject of a shot belongs. State the ratio you "
+     "measured, not an impression — an object at the wrong size is spotted "
+     "instantly by viewers who cannot say why."),
 ]
 
 
@@ -246,6 +260,8 @@ def plan(path, ref=None):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        sys.exit(__doc__)
     cmd = sys.argv[1]
     if cmd == "strips":
         print("\n".join(strips(sys.argv[2], sys.argv[3])))

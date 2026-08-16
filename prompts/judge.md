@@ -24,7 +24,7 @@ generate → **this file** → `surgery.md` or `post.py` if the verdict says so.
 
 ## Stage 0 — before spending credits
 
-    python tools/gate.py targets/X.intent.json targets/X.v4.txt
+    python tools/gate.py targets/X.intent.json targets/X.v<n>.txt
 
 A prompt that fails the gate is not worth generating. Nothing below applies yet.
 
@@ -34,16 +34,29 @@ A prompt that fails the gate is not worth generating. Nothing below applies yet.
     python tools/sweep.py plan   out.mp4 ref.mp4 > plan.md
     python tools/sweep.py strips out.mp4 sweep/
     python tools/sweep.py tiles  out.mp4 sweep/
+    python tools/sweep.py strips ref.mp4 sweep_ref/     # the control
+    python tools/sweep.py tiles  ref.mp4 sweep_ref/
+
+**Build the reference's artifacts too.** A slit-scan is read against the reference's
+slit-scan or it is read against nothing: a static background draws straight lines
+legitimately, so "straight" only means something next to a clip where it wavers.
 
 Read `warnings` in `measure.json` first. A metric carrying a warning is not
 evidence, and a hotspot on a clip whose alignment mostly failed is not a location.
+`bg_tiles` deserves the same scepticism even when it does not warn — compare the
+candidate's count against the reference's, and treat a large shortfall as a reason to
+distrust every permanence number, not just a low absolute count.
 
 ## Stage 2 — red team, in parallel
 
 `plan.md` ends with a table of **work packages**. Spawn **one fresh agent per
-package, all at once**. They are independent by construction: the packages are cut
-along the artifact each needs, so no two agents examine the same evidence and none
-waits on another.
+package, all at once**. Packages are cut by evidence rather than by theme, so every
+tile is read by exactly one agent, which answers every question that applies to it —
+including reading any text it contains. That is what keeps them genuinely parallel: a
+package defined as "all text everywhere" would re-open every tile the other packages
+already hold and pace the whole run on its own.
+
+Give each package the reference's artifacts alongside the candidate's.
 
 Give each agent exactly this, and nothing else:
 
@@ -63,10 +76,20 @@ the shot is meant to contain will confirm it is there.
 > and it is expected; `clear` means you looked and it was fine.
 >
 > Return an entry for EVERY pitfall in your package, including the ones you cleared.
-> JSON: {package, findings: [{pitfall, verdict: defect|clear|cannot_tell, where,
-> evidence, severity_1_5}]}.
+> JSON: {package, findings: [{pitfall, verdict: defect|clear|cannot_tell, where:
+> [{frame, tile_or_box}], evidence, severity_1_5}]}.
+>
+> Start at the final sampled frame of your region. Degradation is end-loaded, so the
+> tail is where a defect is most likely to be waiting.
 
-`where` must be a frame number and a tile or box, so a finding can be re-opened.
+`where` is a list, so a pitfall that recurs across tiles or frames records each of
+them. Every entry must carry a frame number and a tile or pixel box, so a finding can
+be re-opened by someone who did not make it.
+
+If a sub-test inside a pitfall has nothing to bite on — counter-rotation when the
+head never turns, a breathing rate on a clip too short to contain two cycles — record
+that sub-test as not applicable and judge on the rest. Do not return `cannot_tell`
+for a whole pitfall because one of its checks was inapplicable.
 
 ## Stage 3 — blind judges, also in parallel
 
@@ -79,18 +102,29 @@ If a judge recovers the premise from the original but not the candidate, that is
 clean differential. If it recovers neither, the judge or the framing is at fault,
 not the candidate.
 
+**Normalise the files before shuffling.** A raw generator output and a
+platform-delivered reference differ several-fold in bitrate and file size, and these
+judges are told to run `ffmpeg` — so `ls` or `ffprobe` hands them the answer and the
+control is not a control. Re-encode both to one bitrate and strip metadata:
+
 ```bash
 python3 - <<'EOF'
-import random, json, shutil, pathlib
+import random, json, subprocess, pathlib
 files = ["dl/orig_4s.mp4", "gen/v4.mp4"]          # extend as needed
 names = ["clip_a.mp4", "clip_b.mp4"]
 random.shuffle(files)
 pathlib.Path("blind").mkdir(exist_ok=True)
 for src, dst in zip(files, names):
-    shutil.copy(src, f"blind/{dst}")
+    subprocess.run(["ffmpeg", "-v", "error", "-i", src,
+                    "-c:v", "libx264", "-b:v", "2000k", "-pix_fmt", "yuv420p",
+                    "-map_metadata", "-1", "-an",
+                    f"blind/{dst}", "-y"], check=True)
 json.dump(dict(zip(names, files)), open("blind/KEY.json", "w"))   # do not read yet
 EOF
 ```
+
+The re-encode costs a little grain, which is fine: no metric here reads grain
+magnitude, and these judges are answering semantic and perceptual questions.
 
 Hand `blind/clip_a.mp4` and `blind/clip_b.mp4` to separate fresh agents, collect
 verdicts, and only then open `KEY.json`.

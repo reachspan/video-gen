@@ -49,15 +49,14 @@ and decides — nothing else decides anything.
 
     uv venv --python 3.13 .venv
     uv pip install --python .venv/bin/python opencv-python-headless scikit-image numpy scipy av pillow
-    export PYTHONPATH=tools
 
 ### Loop
 
     # 1. free checks, before spending credits
-    python tools/gate.py targets/X.intent.json targets/X.v3.txt
+    python tools/gate.py targets/X.intent.json targets/X.v<n>.txt
 
     # 2. generate
-    higgsfield generate create <model> --prompt "$(cat targets/X.v3.txt)" \
+    higgsfield generate create <model> --prompt "$(cat targets/X.v<n>.txt)" \
       --image char.png --video ref.mp4 --duration 5 --resolution 720p \
       --aspect_ratio 9:16 --wait
 

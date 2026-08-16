@@ -329,6 +329,8 @@ def viz(out, paths):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        sys.exit(__doc__)
     cmd = sys.argv[1]
     if cmd == "viz":
         print(json.dumps(viz(sys.argv[2], sys.argv[3:]), indent=1))
