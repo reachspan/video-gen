@@ -64,9 +64,60 @@ strand end to end, every tool to the hand holding it. Anything entering from an 
 belongs to a body you cannot see, and quietly assigning it to the person you *can* see
 is the easiest mistake in this format to make and the hardest to notice afterwards.
 
+### Reconstruct one track at a time, and run them in parallel
+
+A clip is not a list of objects. It is several things each doing something over time,
+and the spec is only as good as its worst-understood one. So reconstruct them as
+separate **tracks**, each covering the whole duration. A track is checkable; an
+impression is not.
+
+At minimum, one track each for:
+
+- **gaze**, per person — where the eyes point, when they move, in which direction, and
+  what the lids do
+- **gesture** — what hands and bodies do: holds, shifts, regrips, what stays put
+- **every load-bearing prop** — its topology, what it is attached to, what changes
+- **camera** — framing and distance over time
+
+Each track lives in a different crop, so they parallelise: one fresh agent per track,
+one crop each. Cut them by region rather than by theme, for the same reason the sweep
+packages are — two agents needing the same crop duplicate the work and set the pace for
+the whole run.
+
+Give a track agent no premise and no spec. One told what the shot means will hand the
+meaning back to you as an observation.
+
+> You are reconstructing ONE track of a short video: **<TRACK>**. Work only inside the
+> crop you are given, and report only what is inside it.
+>
+> Sample every frame, not a selection. Cut your region out of the whole clip and lay it
+> out as contact sheets, raising the rate until nothing changes between adjacent cells:
+>
+>     ffmpeg -i CLIP -vf "fps=N,crop=W:H:X:Y,scale=400:-1" sheet/f%03d.jpg
+>     ffmpeg -pattern_type glob -i 'sheet/f*.jpg' -filter_complex tile=3x4 sheet%d.jpg
+>
+> Where a count or a join will not resolve, crop tighter and scale harder — 6x, 8x,
+> whatever settles it — rather than guessing or giving up. Two things merged into one by
+> a wide crop is the failure you are looking for.
+>
+> Report a **timeline**: the spans this track holds a state, what the state is, and what
+> changed at each boundary. Give timestamps. Describe direction and magnitude in the
+> picture's own terms — screen-left, downward, a third of the way across the frame — and
+> do NOT name what you think something is looking at or reaching for. You cannot see
+> outside your crop, and naming the target is the guess that gets copied into the spec.
+>
+> Return JSON: {track, spans: [{t_start, t_end, state, changed_at_boundary}],
+> counts: {...}, unresolved: [...]}
+
+Merge the returned tracks into `tracks` in the spec, then resolve the targets yourself:
+a track that reports "eyes go down and to screen-left at 2.4s" plus a track that reports
+a person standing at that edge is what tells you he is checking somebody. Neither agent
+could have told you that, and neither should have tried.
+
 Record the duration, whether there is a cut, and where the beats fall, into `shot`.
 If you are compiling part of a longer reference, put the span in `segment`; a spec
 that does not say which seconds it describes cannot be checked against anything.
+`shot.beats` is the spine; `tracks` is what each thing is doing against it.
 
 Then ask of every prop: **what is it for?** A thing in a person's hands is rarely
 just a thing. It may be a pun, a threat, a tell, or genuine busywork, and those
@@ -144,6 +195,12 @@ this is the shape:
   "premise": "<one paragraph: what this is doing and why it works>",
   "mechanism": ["<the specific devices that deliver the premise>"],
   "shot": {"duration_s": 4.0, "cut_count": 0, "beats": ["0.7-1.0s pause"]},
+  "tracks": {
+    "gaze": [{"t": "0.0-0.6", "state": "<direction, lids>", "changed_at": "<what moved>"}],
+    "gesture": [{"t": "...", "state": "...", "changed_at": "..."}],
+    "<prop-id>": [{"t": "...", "state": "...", "changed_at": "..."}],
+    "camera": [{"t": "...", "state": "...", "changed_at": "..."}]
+  },
   "elements": [
     {"id": "cable-coil",
      "what": "<what a camera recorded: objects, counts, contacts, whose limb. No reading.>",
@@ -311,6 +368,40 @@ to something already in the frame rather than to an absolute — "no larger than
 hand, entering only at the frame edge" — since size and reach are judged against a
 body, and naming the object alone fixes neither. Prefer the relation to either:
 "close enough that he would have to lean away from it" survives being obeyed.
+
+### Write the timeline, not only the state
+
+The blocks above describe what is true for the whole take. Anything that **changes**
+needs a time, or the model picks one state and holds it — which is how a performance
+becomes a pose that happens to last four seconds.
+
+So add a TIMELINE block, written from `tracks`. One line per change, with a clock
+reference and the track it belongs to:
+
+    TIMELINE
+    0.0-0.6  eyes off the lens, down and to his right; lids low
+    0.6      eyes come up to the lens as the line starts
+    0.6-1.8  speaking, eyes on the lens, brow moving on the stressed word
+    1.8      eyes drop away again, same direction, lids lower
+    2.4      weight shifts on the seat; hands sink and come back
+    ...
+
+Two rules for it, both learned the hard way:
+
+**Say what holds, not only what moves.** A timeline listing only changes reads as
+permission to change everything unlisted. Close it with the things that must be
+identical at the first frame and the last — the wrap, the count, the shot size, who is
+holding what.
+
+**Do not write a pose per instant.** A dense timeline of positions is the freeze
+failure at finer resolution: the model spends its budget hitting marks and the life
+between them disappears. Time the *transitions* — when a thing starts, when it changes,
+which direction it goes — and leave the state between them free.
+
+There is no documented per-timestamp parameter on the endpoints used here, so the
+timeline is prose the model reads like any other. Check anyway before writing it: if
+the current model exposes a multi-prompt or per-segment input, the timeline is what
+fills it, and the mechanism changes from persuasion to instruction.
 
 ## 6. Swaps and changes
 
