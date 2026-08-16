@@ -3,22 +3,18 @@
 **Start here to evaluate a generated clip.** This file owns the procedure: what to
 run, in what order, who does it, and how the answers combine into one decision.
 
-Everything else is a component with one job:
+What it consumes, and what each of those does NOT do:
 
 | file | job | does NOT |
 |---|---|---|
-| `prompts/compile.md` | reference video → intent spec + prompt, incl. swaps | generate or judge |
-| `prompts/face-gen.md` | build a character reference image | write the video prompt |
-| `prompts/surgery.md` | repair a localized defect by regenerating a span | decide there is one |
 | `tools/gate.py` | prompt vs intent, before generating | look at pixels |
 | `tools/vq.py` | signal measurement against a reference | decide anything |
 | `tools/sweep.py` | build inspection artifacts, emit the checklist | judge them |
 | `docs/pitfalls.md` | catalogue of what goes wrong in this format | say how to sweep |
 | `docs/minesweep.md` | how to read the artifacts, and why they cover the clip | list pitfalls |
-| this file | run the check, dispatch the agents, consolidate, decide | measure |
 
-The order of work: `compile.md` (with `face-gen.md` for identity) → `gate.py` →
-generate → **this file** → `surgery.md` or `post.py` if the verdict says so.
+`AGENT.md` routes between this and the other procedures. Nothing but this file
+decides whether a clip ships.
 
 ---
 
