@@ -88,21 +88,6 @@ frame edge as a side effect, and G2 will not notice, because the element is stil
 named in the prompt while no longer being in the shot the prompt describes. Record
 that reasoning next to the assertion so a later editor sees the coupling.
 
-### Real brands, and names spoken aloud
-
-If the reference carries a real company's trade dress, or a real name is spoken, it
-is doing one of two jobs: it is incidental, or it is what the premise is about.
-
-- **Incidental** — strip it. Ask for unbranded, worn equipment and plain garments. A
-  wrong wordmark reads as fake faster than no wordmark.
-- **Load-bearing** — genericise rather than reproduce. Keep the shape of the line and
-  swap the name. A recreation puts a real, named organisation inside a premise its
-  owner never agreed to, which is a claim about them rather than a recreation of a
-  shot, and it is worth neither the exposure nor the argument.
-
-Record which call you made and why in the spec; it is a semantic edit to the
-reference and the next person needs to know it was deliberate.
-
 ## 3a. The file
 
 `gate.py` hard-requires `elements[]`, `forbidden_assertions`, `performance`

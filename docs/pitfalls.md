@@ -101,6 +101,3 @@ Each costs real effort, and acting on it makes the output *worse*.
 bits/pixel. PRNU is gone beyond QP 28 and >70% of macroblocks are skip-coded —
 copied, not encoded. Any tell that lives in per-pixel sensor statistics is destroyed
 before a viewer ever sees it.
-
-Technique-level detail on tells and remedies, including ones this format cannot use,
-is in `docs/forensics.json` (24 tells, 16 techniques).
