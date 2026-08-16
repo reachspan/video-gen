@@ -13,10 +13,24 @@ import subprocess, sys
 import cv2
 import numpy as np
 from scipy import ndimage
-from vid import read, write, probe, luma
+from vid import read, write, probe, luma, luma_profile, count, spread, blocks, read_at
 
 RNG = np.random.default_rng(7)
-BANDS = ((0, 64), (64, 128), (128, 192), (192, 256))
+
+
+def profile(F):
+    """Per-band noise, with unmeasurable bands read as zero so the fit is defined."""
+    return [0.0 if v is None else v for v in luma_profile(F)]
+
+
+def sample(path, k):
+    """k frames spread across the clip. Reference statistics taken from the first
+    k frames instead would be biased toward the head of the shot."""
+    idx = spread(count(path), k)
+    f = read_at(path, idx)
+    return np.stack([f[i] for i in idx])
+
+
 CENTRES = np.array([32, 96, 160, 224], float)
 
 
@@ -48,7 +62,7 @@ def exposure(ref, cand, out=None):
     0.002 change in rimax swings clipping several-fold. A masked window-region
     lift is the better approach.
     """
-    hi_t, lo_t = clip_stats(read(ref, 48))
+    hi_t, lo_t = clip_stats(sample(ref, 48))
     C = read(cand)
     print(f"reference  high {hi_t:.3f}%  low {lo_t:.3f}%")
     print(f"candidate  high {clip_stats(C)[0]:.3f}%  low {clip_stats(C)[1]:.3f}%")
@@ -104,11 +118,22 @@ def shake_path(n, fps, amp):
     return amp * series(), amp * series(), 0.06 * amp * series()
 
 
-def displacement(path, n=48):
-    """Per-frame global translation magnitude, in pixels."""
-    G = read(path, n, gray=True).astype(np.float32)
-    d = [cv2.phaseCorrelate(G[i], G[i + 1])[0] for i in range(len(G) - 1)]
-    return np.hypot(*np.array(d).T)
+def displacement(path, nblocks=3, blocklen=16):
+    """Per-frame global translation magnitude, in pixels.
+
+    Read in contiguous blocks spread across the clip: the pairs must be adjacent
+    for phase correlation to mean anything, but taking them all from the opening
+    seconds measures how the shot starts, not how it moves.
+    """
+    idx = blocks(count(path), nblocks, blocklen)
+    f = read_at(path, [i for b in idx for i in b])
+    d = []
+    for b in idx:
+        for u, v in zip(b, b[1:]):
+            A = cv2.cvtColor(f[u], cv2.COLOR_RGB2GRAY).astype(np.float32)
+            B = cv2.cvtColor(f[v], cv2.COLOR_RGB2GRAY).astype(np.float32)
+            d.append(np.hypot(*cv2.phaseCorrelate(A, B)[0]))
+    return np.array(d)
 
 
 def shake(cand, out=None, amp=None, ref=None):
@@ -138,31 +163,10 @@ def shake(cand, out=None, amp=None, ref=None):
     return G
 
 
-def luma_profile(F):
-    """Noise level in flat regions, per luma band.
-
-    Flatness is ranked within each band; a global gradient threshold selects
-    almost only shadow and leaves the bright bands with too few pixels to measure.
-    """
-    Y = luma(F)
-    res = Y - ndimage.gaussian_filter(Y, (0, 1, 1))
-    g = ndimage.gaussian_gradient_magnitude(Y, (0, 1.5, 1.5))
-    p = []
-    for lo, hi in BANDS:
-        inband = (Y >= lo) & (Y < hi)
-        if inband.sum() < 20000:
-            p.append(0.0)
-            continue
-        gb, rb = g[inband], res[inband]
-        v = rb[gb < np.percentile(gb, 40)]
-        p.append(float(1.4826 * np.median(np.abs(v - np.median(v)))) if v.size else 0.0)
-    return p
-
-
 def grain(ref, cand, out=None):
     """Add noise weighted by the reference's per-luma-band profile."""
-    want, C = luma_profile(read(ref, 32)), read(cand)
-    have = luma_profile(C)
+    want, C = profile(sample(ref, 32)), read(cand)
+    have = profile(C)
     print(f"reference  {[round(v, 3) for v in want]}")
     print(f"candidate  {[round(v, 3) for v in have]}")
     w = np.interp(luma(C), CENTRES, np.maximum(np.subtract(want, have), 0))
@@ -170,7 +174,7 @@ def grain(ref, cand, out=None):
     z = ndimage.gaussian_filter(z, (0, 0.5, 0.5))
     z /= z.std() + 1e-9
     G = np.clip(C.astype(np.float32) + (z * w)[..., None], 0, 255).astype(np.uint8)
-    print(f"grained    {[round(v, 3) for v in luma_profile(G)]}")
+    print(f"grained    {[round(v, 3) for v in profile(G)]}")
     if out:
         write(G, out, probe(cand)["fps"])
     return G

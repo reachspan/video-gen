@@ -4,9 +4,9 @@
 G2 element coverage  - every required element must survive into the prompt
 G3 constraint conflict - no prompt clause may contradict the premise
 
-These exist because a constraint added for one reason (identity safety) silently
-deleted a required element (the captors), and nothing downstream could see it:
-every other check in the pipeline measures pixels, not meaning."""
+A constraint added for one reason can delete a required element as a side effect,
+and nothing downstream will catch it: every other check in the pipeline measures
+pixels, not meaning."""
 import json, re, sys
 
 STOP = set("""a an the of in on at to and or with his her its this that is are be as

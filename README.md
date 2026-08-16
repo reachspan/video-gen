@@ -1,69 +1,66 @@
 # video-gen
 
-Agent-facing video tooling: download reference reels, recreate them with AI
-generation, and measure how close the result is to camera-captured footage.
+Take a short video you like, recreate it with AI generation — with a different person
+in it, or a different setting — and check honestly whether the result holds up.
 
-## ig-dl
+Built for 9:16 phone-shot social video: a few seconds, one speaker, handheld.
 
-Download Instagram reels, posts and carousels. Single file, stdlib only, no dependencies.
+## What you get
+
+- **`utils/ig-dl`** — download a reference reel to work from.
+- **A written spec of the reference**, separating what the clip *means* from how it
+  happens to look, so you can change the person or the place without breaking the
+  thing that made it work.
+- **An inspection pass** that looks at every frame and every region of the result
+  rather than whatever catches the eye, and reports what it could not resolve as well
+  as what it found.
+
+An agent drives all of it. `AGENT.md` tells the agent which procedure to follow; you
+can just describe what you want.
+
+## Downloading a reference
 
 ```bash
-./ig-dl <url|shortcode>... [-o DIR] [--cookies FILE] [--json]
+utils/ig-dl <url|shortcode>... [-o DIR] [--cookies FILE] [--json]
 ```
 
-- **stdout** — saved paths, one per line, flushed as they land
-- **stderr** — errors, and `--json` metadata (owner, caption, duration, views, timestamp)
-- **exit 1** if any URL failed; remaining URLs in the batch still download
+Reels, posts and carousels. Single file, stdlib only, no dependencies. Saved paths go
+to stdout as they land; `--json` adds owner, caption, duration and timestamp on
+stderr. Use `--cookies` with a Netscape-format file for private or age-gated posts.
 
-Accepts `/p/`, `/reel/`, `/reels/` and `/tv/` URLs or a bare shortcode. Carousels save as
-`<code>_1.jpg`, `<code>_2.mp4`; single posts as `<code>.mp4`. Use `--cookies` with a
-Netscape-format file for private or age-gated posts.
-
-Instagram rotates the GraphQL `doc_id` this depends on. When all the built-in ones go stale
-the tool says so explicitly; pull a fresh `doc_id` from a browser DevTools capture of a reel
+Instagram rotates the internal `doc_id` this depends on. When the built-in ones go
+stale the tool says so; pull a fresh one from a browser DevTools capture of a reel
 page load and prepend it to `DOC_IDS`.
 
-## Evaluation suite
+## The loop
 
-    tools/vid.py     video I/O (PyAV decode/encode, probe, luma)
-    tools/vq.py      measurement: 18 metrics + motion rendered as stills
-    tools/post.py    algorithmic post: exposure, shake, grain
-    tools/gate.py    semantic pre-flight checks on a prompt
-    prompts/judge.md blind-judge prompts, run with the original as control
-    targets/         per-reel intent spec and prompt
-    docs/pitfalls.md tells ranked for this format
-    docs/forensics.json  24 forensic tells, 16 remediation techniques
+1. **Compile** the reference into a spec and a prompt.
+2. **Check the prompt** against the spec before spending anything — free, and it
+   catches the mistakes that would otherwise cost a whole generation.
+3. **Generate.**
+4. **Sweep and judge** the result: measurements point at where to look, then agents
+   inspect the clip in parallel and return a ship / do-not-ship call with reasons.
+5. **Fix** — a signal mismatch is corrected locally for free, a bad span is
+   regenerated on its own, and only a broken premise needs starting over.
 
-### Setup
+Ask for any step by name, or for the whole thing.
+
+## What to expect
+
+Generation is a numbers game: professional work discards on the order of sixty
+attempts per keeper, so budget for rejects rather than for one clean run. Clips
+degrade toward the end, so it is normal to generate longer than needed and trim.
+
+No measurement here can tell you whether a clip is real or generated — real footage
+varies more between cameras and shooting styles than generated footage differs from
+real. The measurements say where a result departs from its reference; the judgement
+is made by looking. `docs/pitfalls.md` lists what tends to go wrong and how each gets
+checked.
+
+## Setup
 
     uv venv --python 3.13 .venv
     uv pip install --python .venv/bin/python opencv-python-headless scikit-image numpy scipy av pillow
-    export PYTHONPATH=tools
 
-### Loop
-
-    # 1. free checks, before spending credits
-    python tools/gate.py targets/X.intent.json targets/X.v3.txt
-
-    # 2. generate
-    higgsfield generate create seedance_2_0 --prompt "$(cat targets/X.v3.txt)" \
-      --image char.png --video ref.mp4 --duration 5 --resolution 720p \
-      --aspect_ratio 9:16 --bitrate_mode high --wait
-
-    # 3. measure against the reference
-    python tools/vq.py measure ref.mp4 out.mp4
-    python tools/vq.py viz motion.png ref.mp4 out.mp4
-
-    # 4. blind judge, shuffled, original as control (see prompts/judge.md)
-
-Metrics mean nothing in isolation: pass reference and candidate to one `measure`
-run and read the comparison. Generate ~25% longer than needed and trim the tail,
-where degradation concentrates. Inspect suspected defects as tight crops upscaled
-4x — a full frame arrives downsampled and invents anatomy and text faults.
-
-### Cost
-
-Seedance 2.0 720p is 22.5 credits for 5s. Every generative edit path costs more
-than a full regeneration (`video_edit` 26.5, `draw_to_video` 26.5, `reframe`
-28.5), and none is reproducible, since no Seedance endpoint exposes a seed.
-Signal-level fixes belong in `post.py`; only semantic changes justify a regen.
+Generation runs through the [Higgsfield](https://higgsfield.ai) CLI, which needs its
+own account and credits. `ffmpeg` must be on the path.
