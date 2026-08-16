@@ -1,7 +1,8 @@
 # AGENT.md
 
 Routing for an agent working in this repo. Find the row that matches what was asked,
-read that file, and follow it. Each one owns its procedure end to end.
+read that file, and follow it. Each one owns its procedure end to end; this file only
+points.
 
 ## Which prompt to follow
 
@@ -12,33 +13,35 @@ read that file, and follow it. Each one owns its procedure end to end.
 | a face or identity reference image for a character | `prompts/face-gen.md` |
 | a generated clip checked, judged, or "is this good enough to ship" | `prompts/judge.md` |
 | one defect repaired without re-rolling the whole shot | `prompts/surgery.md` |
-| exposure, shake or grain brought closer to the reference | `tools/post.py` |
+| exposure, shake or grain brought closer to the reference | `prompts/post.md` |
 | to know what tends to go wrong in this format | `docs/pitfalls.md` |
-| to understand what the inspection artifacts show | `docs/minesweep.md` |
+| to read what the artifacts and the metrics show | `docs/evidence.md` |
 
 If the request spans several, the order is:
 
     compile.md ─┬─→ gate.py ─→ generate ─→ judge.md ─┬─→ surgery.md
-    face-gen.md ┘                                    └─→ post.py
+    face-gen.md ┘                                    └─→ post.md
 
-## Rules that hold everywhere
+`judge.md` is where the loop closes: it decides whether a clip ships and, if it does
+not, which of the other three the fix belongs to.
 
-- **Metrics point; they do not decide.** Nothing in `vq.py` separates generated
-  footage from real — measured against real phone video, a generated clip sits inside
-  the real range on every metric. A metric that fires is a place to look. A quiet
-  metric is not a pass.
-- **Inspect at 4x.** A full frame arrives downsampled, which is how a defect gets
-  missed and equally how one gets invented. Anything you cannot resolve at 4x is
-  `cannot_tell` — a real answer, and better than a guess in either direction.
-- **Record a verdict for everything you were asked to check, including what you
-  cleared.** An item with no verdict has not been checked.
-- **Never show a red-team or blind judge the intent spec or the prompt.** An agent
-  told what the shot should contain will confirm it is there.
-- **Run `gate.py` before spending credits.** It is free and it catches the class of
-  failure that costs a whole generation.
-- **Prices and model names change.** Ask the CLI (`higgsfield model list`,
-  `model get`, `generate cost`) rather than trusting a figure written down anywhere,
-  including here.
+## One home per instruction
+
+Follow it when editing as well as when reading. Duplicated instructions drift, and
+two files giving slightly different orders is worse than one file being incomplete.
+
+- **`prompts/` own procedures.** What to run, in what order, who runs it, what they
+  are allowed to see, and what the answer means.
+- **`docs/` are leaves.** `pitfalls.md` catalogues what goes wrong; `evidence.md`
+  explains what the artifacts and metrics show. Neither says what to do, and neither
+  points back into `prompts/` — that would make the reading order circular.
+- **Tools own their own output.** `sweep.py plan` emits the per-pitfall procedure and
+  the brief every sweep agent works from, because that text has to stand alone in a
+  fresh agent's context. `judge.md` says who receives it; it does not restate it.
+
+The blockquoted blocks inside the prompts are payloads to hand to a subagent
+verbatim, not instructions to whoever is reading. They repeat things on purpose,
+because their reader has no other context.
 
 ## Tools, one job each
 
@@ -50,8 +53,10 @@ If the request spans several, the order is:
     tools/vid.py      shared video I/O and sampling
     utils/ig-dl       reference clip downloader
 
-Only `judge.md` decides anything. The tools measure and build evidence; the prompts
-under `prompts/` carry the procedures.
+The tools measure and build evidence. Only `judge.md` decides anything.
+
+**Prices and model names change.** Ask the CLI (`higgsfield model list`, `model get`,
+`generate cost`) rather than trusting a figure written down anywhere, including here.
 
 ## Environment
 

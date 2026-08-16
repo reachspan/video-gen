@@ -9,7 +9,7 @@ expected direction.
 
 This proves a metric measures what it claims. It does not prove the metric
 separates generated footage from real footage — none of them does, so a passing
-metric is a usable pointer, not a detector. See docs/pitfalls.md.
+metric is a usable pointer, not a detector. See docs/evidence.md.
 
 A metric with no case is UNCOVERED and is reported as a failure: silence about a
 metric is not evidence for it.

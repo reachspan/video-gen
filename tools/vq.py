@@ -10,7 +10,7 @@ video from six cameras, a generated clip sits inside the real range on every met
 here, so none of them can decide whether footage is real. What they do is
 say where and when a candidate departs from its reference, which is where to look.
 Read a value only against a reference measured in the same run; a quiet metric is
-not a pass. See docs/minesweep.md.
+not a pass. See docs/evidence.md.
 
 noise_luma_slope is worth knowing about: it is near-constant per camera, so it
 tests whether two clips share a capture pipeline rather than whether either is

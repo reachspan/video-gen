@@ -5,8 +5,9 @@ so it splices back in. For a defect that occupies part of the runtime and leaves
 rest usable.
 
 **Not for:** a semantic failure (wrong premise, wrong performance, missing element) —
-that is a prompt problem, so fix the prompt and regenerate whole. **Not for:** a
-signal mismatch (exposure, shake, grain) — that is `post.py`, and it is free.
+that is a prompt problem, so fix the prompt and regenerate whole, per `compile.md`.
+**Not for:** a signal mismatch (exposure, shake, grain) — that is `post.md`, and it
+is free.
 
 Surgery is for something that is *wrong in a place*: an object that morphs, a prop
 that re-routes, a hand that breaks and recovers, a tail that collapses.
