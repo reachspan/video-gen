@@ -207,12 +207,15 @@ PLAN = [
      "cross-clip, not in-clip: put several generations side by side and ask "
      "whether they look more alike than several real people would."),
     ("T15", "Object scale and placement", "-",
-     "tiles on every held or intruding object. Measure it against the body: a "
-     "hand is ~1 head wide, a cordless drill ~1 head long. Generated objects come "
-     "back oversized and pushed toward the centre of the frame, because that is "
-     "where the model believes the subject of a shot belongs. State the ratio you "
-     "measured, not an impression — an object at the wrong size is spotted "
-     "instantly by viewers who cannot say why."),
+     "tiles on every held or intruding object. TWO measurements, both stated as "
+     "ratios rather than impressions. (1) Size against the body: a hand is ~1 "
+     "head wide, a cordless drill body ~1 head long, a claw hammer ~1.4 heads "
+     "overall. Wrong in either direction counts — a truncated handle is as wrong "
+     "as an oversized body. (2) Intrusion depth: for anything entering from a "
+     "frame edge, measure the DEEPEST point of the whole assembly, bit, blade or "
+     "extension included, not the body's bounding box. An object whose body sits "
+     "at the edge while its tip crosses the frame centre is no longer an edge "
+     "intrusion, and measuring the body alone will clear it."),
 ]
 
 

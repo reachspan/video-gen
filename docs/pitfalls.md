@@ -51,7 +51,7 @@ and gets cut.
 | `T12` | **Cinema bokeh on a phone framing.** Blur disc >1.5% of frame height is not a phone. | measure a background point highlight |
 | `T13` | **AE/WB never move.** Exposure flat for the whole clip. | plot per-frame mean luma; real shows wander + one step response |
 | `T14` | **Beauty bias / age flattening.** Ordinary 50-year-old returns as attractive 32. Worst under text-only identity. | 5 seeds side by side: more similar than 5 real people? |
-| `T15` | **Object scale and placement.** Held and intruding objects come back oversized and drifted toward frame centre. | measure the object against the head; a cordless drill is ~1 head long |
+| `T15` | **Object scale and placement.** Held objects come back the wrong size in either direction; edge intrusions reach too far in. | measure against the head (drill body ~1, claw hammer ~1.4), and measure intrusion depth to the tip of bit or blade, not the body |
 
 **`T9` and `T15` are the two that keep landing**, and they land together on the same
 object: a held tool comes back oversized, pushed toward frame centre, and wearing a
