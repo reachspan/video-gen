@@ -261,11 +261,11 @@ adding onlookers needs the prompt to say there are no *additional* people — wh
 crude "no other people in frame" cannot distinguish from deleting the two who belong
 there. Nor is the collision limited to counting: any instruction that *tightens* — a
 closer shot size, a push-in, a tidier background — can drop an element at the frame
-edge, and G2 will not notice, because the element is still named in the prompt while
+edge, and G1 will not notice, because the element is still named in the prompt while
 no longer being in the shot the prompt describes. Keep assertions narrow and literal,
 let element coverage enforce presence, and record the coupling beside the assertion.
 
-**`what` must not be a prompt sentence.** G2 scores stem-token overlap between each
+**`what` must not be a prompt sentence.** G1 scores stem-token overlap between each
 element's `what` and the prompt. Author both in one pass and it passes by construction,
 having checked nothing. Describe the thing to someone who has not seen the video, then
 write the prompt separately.
@@ -275,7 +275,7 @@ reading. A `what` that states what something *reads as* rather than what it is c
 checked against the video by anybody, including you, because the sentence is true of the
 reading rather than of the picture.
 
-**Affect is invisible to the gates.** G4 checks only `forbidden_affect`; nothing
+**Affect is invisible to the gates.** G3 checks only `forbidden_affect`; nothing
 verifies that `performance.affect` reached the prompt. Where affect *is* the joke,
 record it as a `required` element too — the only way coverage sees it.
 
@@ -337,100 +337,16 @@ it has not read your premise; arguing it round to your reading throws that away.
 
 ## 5. Write the prompt
 
-Blocks, in this order. Each answers one question and repeats nothing:
+`docs/prompt-language.md` has the blocks and their order, the register each constraint
+belongs in, the rules that come from model behaviour, and how the timeline is written.
+Write the prompt from it.
 
-    GLOBAL STYLE      what kind of footage this is, and everything it is NOT
-    REFERENCES        which reference supplies what, and what NOT to take from it
-    PREMISE           the point of the shot, stated as the point
-    CHARACTER         identity, pinned to a reference image
-    EDGE / SECONDARY  anything intruding, with its exact count
-    PROP AND HANDS    grip, contact, size, and that it does not change
-    FRAMING           shot size, subject placement, and a stillness lock
-    PERFORMANCE       affect, and the involuntary movement that sells it
-    LOCATION          the room, including incidental ugliness
-    LIGHTING          sources, direction, and what blows out
-    CAMERA            how it is held and what it must not do
-    TEXT AND BRANDING what carries no writing, and what is unbranded
-    AUDIO             who speaks, the exact words they say, and that nobody narrates
+Two things belong to this step rather than to that file:
 
-Rules that come from what the models actually do:
-
-- **Quote the spoken line, never describe it.** Describing it does not get you a
-  paraphrase, it gets you gibberish — syllables with the prosody of speech and no words
-  in them, lip-synced confidently. Given the exact sentence, the model says it.
-  Transcribe as spoken and keep the broken grammar, the wrong tense and the odd word
-  order; correcting them costs the performance. Script in AUDIO, each line in the
-  TIMELINE at the clock reference where it starts. Where captions and audio disagree,
-  follow what is said — the caption is post.
-- **Negatives go inline.** No Seedance endpoint accepts `negative_prompt`.
-- **State counts explicitly.** Dialogue scenes attract extra onlookers, and removing
-  them from a start frame does not stop it. "Exactly two other people, and no more."
-- **Negate the drifty push-in.** It is a default and does not stop on its own.
-- **Ask for involuntary movement** by name: breathing that creases the shirt, blinks,
-  a swallow, a weight shift. Ask it of everyone in frame rather than only whoever is
-  speaking, or they all go still between scripted beats.
-- **Ask for unretouched skin.** The beauty prior applies to video as well as stills.
-- **Forbid in-frame text and logos.** Any glyph will be reproduced garbled, and a
-  wrong wordmark on an otherwise convincing object reads as fake faster than a
-  blank one.
-
-### Constrain what a thing is, not where it sits
-
-Every constraint falls into one of three registers, and only two of them are safe to
-write:
-
-| register | what it fixes | write it? |
-|---|---|---|
-| identity | what the thing **is** — one continuous strand, the same tool, three people | yes, lock it hard |
-| relation | how things **stand to each other** — what holds what, what is within reach | yes, this is the target |
-| pose | where a thing **sits at each instant** | never |
-
-A pose constraint is satisfiable by exactly one configuration, so the model spends its
-whole motion budget holding it and the thing goes dead. Identity and relation each admit
-a *family* of configurations, and movement survives inside a family. So pair every lock
-with the motion that has to continue through it: a strand keeps its route and its count
-while the hands fidget inside it; a tool stays the same tool at the same distance while
-the hand holding it drifts and re-grips. This applies to whatever you were not thinking
-about — a figure at the frame edge, a hand that only holds something — where the freeze
-reads exactly as badly and is easier to write by accident.
-
-**Geometry is a bound, never a target.** A measured figure is safe as a limit and
-dangerous as a value: "no deeper than a fifth of the frame width" admits a family,
-while "a fifth of the frame width in" admits one, and one is a pose. Anchor the bound
-to something already in the frame rather than to an absolute — "no larger than his
-hand, entering only at the frame edge" — since size and reach are judged against a
-body, and naming the object alone fixes neither. Prefer the relation to either:
-"close enough that he would have to lean away from it" survives being obeyed.
-
-### Write the timeline, not only the state
-
-The blocks above describe what is true for the whole take. Anything that **changes**
-needs a time, or the model picks one state and holds it for the duration.
-
-So add a TIMELINE block, written from `tracks`. One line per change, with a clock
-reference and the track it belongs to:
-
-    TIMELINE
-    0.0-0.6  <track>: state at the top of the take
-    0.6      <track>: what changes, and in which direction
-    0.6-1.8  <track>: the state it holds through the next beat
-    1.8      <track>: the next change
-    ...     one line per change, each naming its track and its clock reference
-
-Two rules for it:
-
-**Say what holds, not only what moves.** A timeline listing only changes reads as
-permission to change everything unlisted. Close it with the things that must be
-identical at the first frame and the last — the wrap, the count, the shot size, who is
-holding what.
-
-**Do not write a pose per instant** — that is the freeze above at finer resolution.
-Time the *transitions*: when a thing starts, when it changes, which direction it goes.
-Leave the state between them free.
-
-No endpoint here documents a per-timestamp parameter, so the timeline is prose. Check
-before writing it anyway: a multi-prompt or per-segment input turns it from persuasion
-into instruction.
+- **Write the prompt from the spec, in a separate pass.** A `what` field and a prompt
+  sentence authored together pass G1 by construction and check nothing (§3, Traps).
+- **Every `required` element needs a clause of its own.** G1 measures that coverage, and
+  it is the only check that sees an element at all.
 
 ## 6. Swaps and changes
 
@@ -444,7 +360,7 @@ from it. Without that second half the original performer leaks back in.
 
 `generation.md` owns which references get attached and what the block has to say about
 each of them; write the block from there. It is also where the rule lives that a prop
-text keeps getting wrong should become an image rather than a third rewrite.
+text keeps getting wrong should become a sourced photograph rather than a third rewrite.
 
 ### Other user changes
 
@@ -453,11 +369,15 @@ change contradicts a `required` element's `function`, say so plainly and ask —
 is the case the spec exists to catch. A change to the setting or the wardrobe is
 usually free; a change to the mechanism is a different video.
 
+Write the replacement clause in the register `docs/prompt-language.md` names, and keep it
+shorter than the element it sits under. A revision loses an element by outweighing it,
+not by deleting it, and G1 passes either way.
+
 ## 7. Gate before generating
 
     vg gate output/<id>/spec.json output/<id>/prompt.v4.txt
 
-`G2` checks that every required element survived into the prompt; `G3` and `G4` check
+`G1` checks that every required element survived into the prompt; `G2` and `G3` check
 that no clause contradicts the premise, the affect or the composition. It is free and
 it catches the class of failure that costs a whole generation.
 

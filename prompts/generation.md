@@ -57,11 +57,11 @@ together.
 Minor figures — a forearm at the frame edge, someone in the background — are worth an
 image if there is budget for one. It supplies build, skin, hands and wardrobe. Optional.
 
-### An image for a prop text keeps getting wrong, often
+### A photograph of a prop text keeps getting wrong, often
 
-Strongly encouraged, and cheap: a still costs a fraction of one video generation, and it
-settles an ambiguity that text would otherwise leave to the roll. Generate one whenever
-the thing is easier to show than to describe:
+Strongly encouraged, and free: a sourced photograph costs nothing and settles an
+ambiguity that text would otherwise leave to the roll. Find one whenever the thing is
+easier to show than to describe:
 
 - a prop whose exact geometry matters — a specific tool, a fitting, anything where the
   wrong variant reads as wrong to anyone who owns one
@@ -71,10 +71,14 @@ the thing is easier to show than to describe:
 - **anything a previous run already failed to get right in text twice.** Two failed
   rolls on the same clause is the signal; do not spend a third.
 
-A prop reference is shot like an identity reference and for the same reason — it
-supplies the object, not the scene. Plain background, flat even light, whole object in
-frame, nothing with text or a logo on it, and the object photographed against a hand
-where its size is load-bearing, since scale is judged against a body (`T15`).
+Check the register before going looking: a clause that failed twice as a pose
+(`docs/prompt-language.md`) fails for a reason a picture does not fix.
+
+**A prop reference is a photograph of a real object, not a generated still.** A
+generated one is a generation like any other and comes back incomplete, mis-scaled or
+falsely branded — and attaching it does not remove those faults from the take, it
+specifies them. `prop-ref.md` owns where to find one, what makes it usable, and what to
+do about the rare object no photograph exists for.
 
 ### When they do not all fit
 
@@ -83,8 +87,8 @@ frames against the image budget:
 
     higgsfield model get <model>            # accepted roles, and the CONSTRAINTS block
 
-Over budget, drop the reference clip first, then prop images, then minor characters.
-Main-character images are the last thing to go.
+Over budget, drop the reference clip first, then prop photographs, then minor
+characters. Main-character images are the last thing to go.
 
 ## 2. Say what each reference is for
 
@@ -109,8 +113,11 @@ names them, and keep that order every time this runs. Name each reference by its
 well as its number — "the face image", "the video reference" — so the block still reads
 correctly if the numbering is not honoured.
 
-Say it for the prop images too: take the object's shape, size and condition from the
-still, and nothing of its lighting, its background or its framing.
+Say it for the prop photographs too: take the object's shape, size and condition from
+the picture, and nothing of its lighting, its background or its framing. A sourced
+photograph needs one clause a generated still did not — a real product is photographed
+with its branding on it, so name the mark and forbid it explicitly wherever one survived
+the crop.
 
 ## 3. Pick the model and read what it accepts
 

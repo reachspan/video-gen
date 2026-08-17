@@ -76,10 +76,11 @@ The command is not model-invocable: it spends credits, so it only runs when you 
    the mistakes that would otherwise cost a whole generation.
 3. **Generate** a take. Every main character gets a generated face image first, because
    identity written as text drifts and comes back better-looking than it should; a prop
-   that text keeps getting wrong gets a reference image too, which is far cheaper than
-   another video attempt. The original clip can go in as a video reference as well — it
-   supplies the camera and the room, and costs you the cast, so it is a trade rather
-   than a step.
+   that text keeps getting wrong gets a reference too, and that one is a photograph of a
+   real object rather than a generated still — a real thing is right about its own
+   geometry in a way a rendering can only be plausible about, and it is free. The
+   original clip can go in as a video reference as well — it supplies the camera and the
+   room, and costs you the cast, so it is a trade rather than a step.
 4. **Judge** the result, meaning first: agents who have not been told what the shot was
    supposed to be watch it blind alongside the original and say what they think it is.
    Only a clip that still means something gets the frame-by-frame sweep, where

@@ -16,16 +16,26 @@ leaves room for the things only text can carry — premise, blocking, performanc
 
 ## Picking a model
 
-Use whichever current image model is oriented at character and reference work rather
-than at text or graphic design. List what is available and check what it accepts:
+**Nano Banana Pro (`nano_banana_pro`), unless there is a reason to change it.** It is the
+top tier of the family the lineup points at for character and reference-driven image
+work, which is this job rather than text or graphic design. `nano_banana_2_lite` is the
+cheaper fallback when a run is tight, at some cost in fidelity on a hard brief.
+
+The lineup turns over, so confirm it is still there and read what it takes rather than
+trusting this page:
 
     higgsfield model list --image
-    higgsfield model get <model>
-    higgsfield generate cost <model> --prompt "..."
+    higgsfield model get nano_banana_pro
+    higgsfield generate cost nano_banana_pro --prompt "..."
+
+Ask for a portrait aspect ratio, so the head and enough torso both fit in one frame
+without cropping either — the reference is useless for wardrobe otherwise. Resolution
+beyond the default buys nothing here: this image is read for identity, and the video
+model resamples it regardless.
 
 Stills are cheap relative to video — cheap enough to iterate honestly, so generate
 several and reject most. Confirm the current price before a long run rather than
-assuming; the model lineup turns over quickly.
+assuming.
 
 ## Writing the prompt
 

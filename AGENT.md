@@ -11,20 +11,25 @@ this one only points at them.
 | a reference video turned into a reusable spec and prompt | `prompts/compile.md` |
 | an existing recreation changed — swap the character, the setting, a prop | `prompts/compile.md` |
 | a face or identity reference image for a character | `prompts/face-gen.md` |
+| a reference photograph for a prop, tool or product | `prompts/prop-ref.md` |
 | a prompt turned into a clip: which references to attach, and the call | `prompts/generation.md` |
 | a generated clip checked, judged, or "is this good enough to ship" | `prompts/judge.md` |
 | one defect repaired without re-rolling the whole shot | `prompts/surgery.md` |
 | exposure, shake or grain brought closer to the reference | `prompts/post.md` |
+| a prompt written or revised: which register a constraint goes in, the blocks, the timeline | `docs/prompt-language.md` |
 | to know what tends to go wrong in this format | `docs/pitfalls.md` |
 | to read the artifacts and the metrics, or to know what a delivered file carries besides the picture | `docs/evidence.md` |
 
 If the request covers several steps, this is the order:
 
     compile.md ─┬─→ gate.py ─→ generation.md ─→ judge.md ─┬─→ surgery.md
-    face-gen.md ┘                                         └─→ post.md
+    face-gen.md ┤                                         └─→ post.md
+    prop-ref.md ┘
 
-`face-gen.md` runs before `generation.md`, not after `compile.md` in particular: every
-main character needs an image before a take can be bought.
+`face-gen.md` and `prop-ref.md` run before `generation.md`, not after `compile.md` in
+particular: every main character needs an image, and every prop worth pinning needs a
+photograph, before a take can be bought. `face-gen.md` generates its image and is a paid
+call; `prop-ref.md` finds a photograph of a real object and is free.
 
 `generation.md` produces one clip per run. Generation is a numbers game, so expect to
 call it repeatedly for the same prompt.
@@ -39,9 +44,11 @@ slightly different orders is worse than one file being a little thin.
 
 - **`prompts/` hold the procedures** — what to run, in what order, who runs it, what
   they are allowed to see, and what the answer means.
-- **`docs/` are reference material.** `pitfalls.md` lists what goes wrong; `evidence.md`
-  explains what the artifacts and the metrics show. Neither tells you what to do, and
-  neither points back into `prompts/` — that would make the reading order circular.
+- **`docs/` are reference material.** `prompt-language.md` gives the language a prompt is
+  written in; `pitfalls.md` lists what goes wrong; `evidence.md` explains what the
+  artifacts and the metrics show. None of them tells you what to do, and none points back
+  into `prompts/` — that would make the reading order circular. `prompt-language.md` is
+  cited from every step that writes or revises a prompt, so it stays one copy.
 - **Tools print their own instructions.** `sweep.py plan` writes the per-pitfall
   procedure and the brief each sweep agent works from, because that text has to make
   sense to an agent with no other context. `judge.md` says who gets it and does not
@@ -91,7 +98,8 @@ fetching anything again. Inside `output/<id>/`:
 
     spec.json               the intent spec                        compile.md
     prompt.v<n>.txt         each prompt revision                   compile.md
-    ref.<name>.png          one identity or prop still per thing   face-gen.md
+    ref.<name>.png          one identity still or prop photo       face-gen.md / prop-ref.md
+    ref.<name>.source.txt   where a sourced photograph came from   prop-ref.md
     seg.mp4                 the reference segment, if one was cut  generation.md
     take.v<n>.t<k>.mp4      the takes                              generation.md
     measure.json plan.md    the evidence                           judge.md

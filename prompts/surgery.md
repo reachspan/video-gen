@@ -72,7 +72,9 @@ change:
 > The prop stays in the same hands, the same size and the same route throughout. No
 > cut, no reframe, no change of shot size.
 
-Negatives go inline, for the reason `compile.md` §5 gives.
+Negatives go inline, for the reason `docs/prompt-language.md` gives. That file also gives
+the register to write the patch in: a patch describes a defect, and a defect is described
+by its appearance, which is a pose. Write the relation instead.
 
 ## 4. Generate
 
@@ -98,7 +100,7 @@ clip's audio and lay the patched picture under it.
 **No reference clip.** The anchors already fix the camera, the framing and the
 exposure, and they come from the shot itself rather than from the original.
 
-**Keep the identity and prop images.** The same files the parent take used, unchanged,
+**Keep the identity and prop references.** The same files the parent take used, unchanged,
 or the patched span comes back with a different person in it.
 
 Budget several attempts.

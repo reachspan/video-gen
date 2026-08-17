@@ -212,9 +212,9 @@ def plan(path, ref=None):
            f"{n} frames at {p['fps']:.2f} fps ({n / p['fps']:.1f}s). "
            f"Tile grid {ROWS}x{COLS} at {ZOOM}x. Sampled frames: {idx}.",
            "",
-           "    python tools/sweep.py strips %s sweep/" % path,
-           "    python tools/sweep.py tiles  %s sweep/" % path,
-           f"    python tools/vq.py measure {ref or 'REF'} {path}",
+           f"    vg sweep strips {path} sweep/",
+           f"    vg sweep tiles  {path} sweep/",
+           f"    vg vq measure {ref or 'REF'} {path}",
            "",
            "Coverage: the strips include every frame; the tiles include every "
            "pixel of each sampled frame, plus each tile at its own worst moment, "
