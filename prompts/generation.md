@@ -20,19 +20,22 @@ prompt buys a take that a free check would have told you not to buy.
 
 ## 1. What gets attached
 
-Three kinds of reference, and the first two are not optional.
+Three kinds of reference. Main characters need an identity image; the rest is a choice.
 
-### The original reference clip, always
+### The original reference clip, when text is not getting there
 
-Attach the reference the shot is recreating as a **video reference**, including when the
-person, the setting and the props have all been swapped out. It is what carries the
-things the prompt describes worst: how the camera is held, how far away it sits, how the
-exposure behaves, how the room reads.
+Not attached by default. Weigh what it buys against what it costs.
 
-Attaching it is half the job. The other half is saying what **not** to take from it —
-the block in §2. A video reference supplied without that instruction hands the model a
-person, and the original performer leaks back into a shot that was supposed to have
-someone else in it.
+It buys the things the prompt describes worst: how the camera is held, how far away it
+sits, how the exposure behaves, how the room reads, what sits at the frame edges. A
+setting or a staging that several rolls have missed often lands on the first take with
+it attached.
+
+It costs the cast. **A video reference wins identity.** Its people, wardrobe and
+branding carry over even with an identity image attached and the prompt forbidding them.
+
+Attach it when the setting, staging or camera has failed repeatedly in text, and the
+cast is unchanged or every character has an identity image. Leave it off when re-casting.
 
 If the reference is longer than the segment being recreated, cut the segment out first
 and attach that, so the camera behaviour it supplies is the behaviour of the seconds
@@ -40,27 +43,24 @@ you are actually making:
 
     ffmpeg -v error -ss 12.0 -to 16.0 -i ref_full.mp4 -c copy targets/<code>.seg.mp4
 
-### An image for every synthetic character, always
+### An image for every main character, always
 
-Any character who is not being taken from the reference clip needs an identity image,
-generated with `face-gen.md`, before the call is made. Not a description in the prompt —
-a file. This holds for the secondary figures too, including one cropped to a forearm at
-the frame edge: it supplies build, skin, hands and wardrobe, and those are as easy to
-get wrong as a face.
+Any character the shot is about needs an identity image, generated with `face-gen.md`,
+before the call is made. Not a description in the prompt — a file.
 
-Text-only identity fails three ways at once, and the third is specific to working this
-way:
+Text-only identity fails two ways at once:
 
 - Identity **drifts** across the take, so the person at 0.5s is not the person at 4s.
 - The **beauty prior** wins (`T14`). An ordinary fifty-year-old comes back as an
   attractive thirty-two-year-old, every time.
-- The video reference contains a person you have just told the model to ignore. Told
-  who to use instead, it complies; told only who not to use, it keeps them.
 
 One file per character, reused **unchanged** by every run of this file and by every
 other shot the character appears in. Regenerating "the same" character produces a
 different person, and two clips of a scene with two different faces in it cannot be cut
 together.
+
+Minor figures — a forearm at the frame edge, someone in the background — are worth an
+image if there is budget for one. It supplies build, skin, hands and wardrobe. Optional.
 
 ### An image for a prop text keeps getting wrong, often
 
@@ -88,20 +88,26 @@ frames against the image budget:
 
     higgsfield model get <model>            # accepted roles, and the CONSTRAINTS block
 
-Over budget, drop in this order: prop images first, then secondary characters, then
-principals. The reference clip is the last thing to go, because nothing else in the
-prompt supplies what it supplies.
+Over budget, drop the reference clip first, then prop images, then minor characters.
+Main-character images are the last thing to go.
 
 ## 2. Say what each reference is for
 
 Attaching a reference does not tell the model which parts of it to use. The prompt's
-`REFERENCES` block does, and it needs both halves — what to take, and what to ignore:
+`REFERENCES` block does, and it needs both halves — what to take, and what to ignore.
+Write one clause per reference attached:
 
-> @Image 1 is the man. @Video 1 is the camera and the room. Take the face, head,
-> build, skin and shirt from @Image 1 and keep them exactly. Take ONLY the camera
-> behaviour, shot size, subject distance and exposure from @Video 1 — do NOT take the
-> person from @Video 1, do NOT copy any face from it, and do NOT copy any logo, badge,
-> printed mark, sticker or lettering from it.
+> @Image 1 is the man. Take the face, head, build, skin and shirt from @Image 1 and
+> keep them exactly. Take NOTHING else from it — not its background, not its lighting,
+> not its framing.
+
+With the reference clip attached, add its clause too. The second half limits what
+carries over:
+
+> @Video 1 is the camera and the room. Take ONLY the camera behaviour, shot size,
+> subject distance and exposure from @Video 1 — do NOT take the person from @Video 1,
+> do NOT copy any face from it, and do NOT copy any logo, badge, printed mark, sticker
+> or lettering from it.
 
 Numbering follows the order the flags are passed, so pass them in the order the block
 names them, and keep that order every time this runs. Name each reference by its role as
@@ -141,10 +147,11 @@ call you are about to make rather than a simplified version of it.
 
     higgsfield generate create <model> \
       --prompt "$(cat targets/<code>.v2.txt)" \
-      --video-references targets/<code>.seg.mp4 \
       --image-references targets/<code>.man.png \
       --image-references targets/<code>.drill.png \
       --duration 8 --resolution 720p --aspect_ratio 9:16 --wait
+
+Add `--video-references targets/<code>.seg.mp4` if §1 says this run wants it.
 
 `--wait` blocks until the job lands and prints the result URL. Without it the call
 returns a job id straight away, and `higgsfield generate wait <id>` picks it back up.
