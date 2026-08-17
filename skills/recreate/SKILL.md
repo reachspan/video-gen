@@ -43,16 +43,16 @@ anywhere else.** `generate cost` takes the same flags as `generate create`, so p
 call you are about to make rather than a simplified version of it:
 
     higgsfield generate cost <model> --prompt "$(cat output/<id>/prompt.v2.txt)" \
-      --duration 8 --resolution 720p --aspect_ratio 9:16
+      <the same flags the call will use, per generation.md §3>
 
 Keep a running total, and check the quote against what is left **before** each call. If
 the next call would cross the budget, stop and report rather than starting it and
 finding out. Do not top up, and do not switch to a cheaper model to squeeze one more in
 unless the user asked for that.
 
-For rough planning only, and stale the moment the lineup changes: a take at 8s / 720p
-priced 36 credits when this was written, and a still 2–7, so 150 buys around four takes
-and their casting. Ask; do not assume.
+For rough planning only, and stale on arrival: when this was written a take priced
+around 36 credits and a still 2–7, so 150 buys roughly four takes and their casting.
+The prices move and so do the settings behind them. Ask; do not assume.
 
 Stop when a take ships or the balance cannot cover another call. A run that spends the
 budget without shipping still delivers: the best take, the report, and what it would
@@ -71,9 +71,10 @@ trusting this page.
     higgsfield model list --video
     higgsfield model get <model>
 
-If the named model does not exist or will not take what this format needs — 9:16, audio,
-the reference slots the run wants — say so, use the default, and record the substitution
-in `report.md`. That is a judgement the spec can settle, so it is not a reason to stop.
+If the named model does not exist, or `model get` shows it will not take what
+`generation.md` §3 asks for, say so, fall back to the default, and record the
+substitution in `report.md`. That is a judgement the spec can settle, so it is not a
+reason to stop.
 
 `face-gen.md` picks its own image model; this default is for video only.
 
@@ -81,11 +82,11 @@ in `report.md`. That is a judgement the spec can settle, so it is not a reason t
 
 **With no instruction beyond the reference, recast every main character** with a
 synthetic identity from `face-gen.md`. That is the default and it does not need
-confirming. It follows that the run is re-casting, so `generation.md` §1 says leave the
-reference clip off — the prompt carries the camera and the room instead.
+confirming. Given instructions, do what they say, and keep the original cast only if
+asked to.
 
-Given instructions, do what they say. Keep the original cast only if asked to; then the
-reference clip becomes available again on `generation.md`'s terms.
+Whether the run is re-casting is the only thing this decides. What that means for which
+references get attached is `generation.md` §1's call, and it is made there.
 
 ## Autonomy
 
@@ -167,8 +168,8 @@ and write the still to `output/<id>/ref.<name>.png`. Reuse one file per characte
 every take; do not regenerate a character between iterations, or two takes cannot be
 cut together.
 
-A prop the spec marks `required` whose geometry matters gets a still too, on
-`generation.md` §1's terms.
+Props may want a still too. `generation.md` §1 says which ones and why; take that
+decision from there rather than guessing here.
 
 ## 4. Gate
 
@@ -185,14 +186,14 @@ While the balance can cover another take:
 
 1. **Generate** one take per `${CLAUDE_PLUGIN_ROOT}/prompts/generation.md`, with the
    model from **Model** above, into `output/<id>/take.v<n>.t<k>.mp4`. Cost it first and
-   check the quote against what is left. Attach the identity stills; attach the
-   reference clip only if §1's terms are met, which recasting rules out.
-2. **Check the container** — `generation.md` §5. A take at the wrong length, silent, or
-   without the scripted line is dead. Record why and loop; a dead take still spent its
-   credits, so charge it to the budget like any other.
-3. **Judge** per `${CLAUDE_PLUGIN_ROOT}/prompts/judge.md`, in its order. Meaning first
-   and blind: if the candidate loses the premise where the reference holds it, do not
-   build the sweep artifacts — revise the spec and the prompt, and loop.
+   check the quote against what is left. What gets attached is §1's decision; tell it
+   whether the run is re-casting and let it choose.
+2. **Check the take** — `generation.md` §5 and §6. They say what to confirm and what
+   counts as dead; take the verdict from there. If it is dead, record why and loop. A
+   dead take still spent its credits, so charge it to the budget like any other.
+3. **Judge** per `${CLAUDE_PLUGIN_ROOT}/prompts/judge.md`, in its order — its first
+   step is a hard gate and decides whether the rest of it runs at all. If the run stops
+   there, revise the spec and the prompt, and loop.
 4. **Act on the verdict**, per `judge.md` step 4:
    - **ships** → done. Run `vg post chain` anyway; it is free and it is worth running on
      a clip that already ships. Re-measure, and keep the post pass only if nothing
@@ -204,7 +205,7 @@ While the balance can cover another take:
    - **premise or domain broken** → back to `compile.md`, revise, regenerate whole.
 
 Carry what you learned into the next prompt revision rather than re-rolling the same
-one: a clause that failed twice becomes a reference image, per `generation.md` §1.
+one; `generation.md` §1 says what to do with a clause that has failed twice.
 
 ## 6. Report
 
