@@ -1,7 +1,7 @@
 ---
 name: recreate
 description: Recreate a reference video end to end — download it, compile it into a spec, cast it, generate takes and judge them — without stopping to ask. Takes a URL or a file path.
-argument-hint: "<url-or-path> [instructions] [--max-iterations N]"
+argument-hint: "<url-or-path> [instructions] [--max-credits N] [--model NAME]"
 disable-model-invocation: true
 ---
 
@@ -14,13 +14,13 @@ to stop and check in.
     $ARGUMENTS
 
 The first token is the reference — an Instagram URL or shortcode, another video URL, or
-a local file path. Everything after it is instruction. `--max-iterations N` overrides
-the generation budget.
+a local file path. Everything after it is instruction. `--max-credits N` overrides the
+spend budget and `--model NAME` the video model.
 
 `${CLAUDE_PLUGIN_ROOT}/AGENT.md` routes to the procedure for each step and defines the
 file layout. Read each procedure when you reach its step; they own their own detail and
-this file does not repeat it. What this file owns is the loop, the budget, and every
-place the procedures would otherwise stop and ask.
+this file does not repeat it. What this file owns is the loop, the budget, the model
+default, and every place the procedures would otherwise stop and ask.
 
 **Two roots, and never mix them.** Every procedure and document named anywhere in this
 pipeline — `prompts/compile.md`, `docs/pitfalls.md` and the rest — lives under
@@ -30,19 +30,52 @@ the plugin, write to the project.
 
 ## Budget
 
-**Three video generations, total, by default.** Override only on explicit instruction —
-`--max-iterations 5`, or "keep going until it's right", or a number in the prose.
+**150 Higgsfield credits, total, by default.** Override only on explicit instruction —
+`--max-credits 400`, or "spend up to 500", or a number in the prose.
 
-What counts against it:
+Everything billed counts against it, because everything billed comes out of the same
+balance: takes, surgery patches, and the face and prop stills alike. A take that comes
+back dead still spent its credits. What is free stays free and never counts — the gate,
+`post.py`, and every inspection step in `judge.md`.
 
-- a take from `generation.md` — counts, including one that comes back dead
-- a surgery patch — counts; it is a video generation like any other
-- a face or prop still — does **not** count, but cap stills at 3 per subject
-- anything `post.py` does — does not count, it is free and deterministic
+**Price each call before making it, and never from a number written down here or
+anywhere else.** `generate cost` takes the same flags as `generate create`, so price the
+call you are about to make rather than a simplified version of it:
 
-Stop when a take ships or the budget is gone, whichever comes first. A run that spends
-the budget without shipping still delivers: the best take, the report, and what it
-would have tried next.
+    higgsfield generate cost <model> --prompt "$(cat output/<id>/prompt.v2.txt)" \
+      --duration 8 --resolution 720p --aspect_ratio 9:16
+
+Keep a running total, and check the quote against what is left **before** each call. If
+the next call would cross the budget, stop and report rather than starting it and
+finding out. Do not top up, and do not switch to a cheaper model to squeeze one more in
+unless the user asked for that.
+
+For rough planning only, and stale the moment the lineup changes: a take at 8s / 720p
+priced 36 credits when this was written, and a still 2–7, so 150 buys around four takes
+and their casting. Ask; do not assume.
+
+Stop when a take ships or the balance cannot cover another call. A run that spends the
+budget without shipping still delivers: the best take, the report, and what it would
+have tried next.
+
+## Model
+
+**Seedance 2.0 (`seedance_2_0`) for video, unless the user names another** —
+`--model NAME`, or "use Kling", or any other model named in the instruction. A named
+model wins outright; do not second-guess it or fall back when it costs more.
+
+`generation.md` §3 owns everything else about the call, and its rule holds here: the
+lineup turns over, so confirm the model exists and read what it accepts rather than
+trusting this page.
+
+    higgsfield model list --video
+    higgsfield model get <model>
+
+If the named model does not exist or will not take what this format needs — 9:16, audio,
+the reference slots the run wants — say so, use the default, and record the substitution
+in `report.md`. That is a judgement the spec can settle, so it is not a reason to stop.
+
+`face-gen.md` picks its own image model; this default is for video only.
 
 ## Casting
 
@@ -87,8 +120,8 @@ If authentication is what is missing, `higgsfield auth login` is interactive and
 browser — you cannot complete it. Stop and tell the user to run it. There is no API-key
 mode to fall back on.
 
-Read the credit balance `doctor` prints. If it will not cover the budget at the price
-`generate cost` quotes in step 5, say so before starting rather than halfway through.
+Read the credit balance `doctor` prints. If it is below the budget, the balance is the
+real ceiling — say so up front and run against that instead.
 
 ## 1. Get the reference
 
@@ -143,33 +176,32 @@ A prop the spec marks `required` whose geometry matters gets a still too, on
 
 `G1` checks that every required element survived into the prompt; `G2` and `G3` check
 that no clause contradicts the premise, the affect or the composition. Revise the prompt
-and re-run until it passes. This is free — never spend a generation on a prompt that has
-not passed it.
+and re-run until it passes. This is free — never spend credits on a prompt that has not
+passed it.
 
 ## 5. The loop
 
-Up to the budget, once per iteration:
+While the balance can cover another take:
 
-1. **Generate** one take per `${CLAUDE_PLUGIN_ROOT}/prompts/generation.md`,
-   into `output/<id>/take.v<n>.t<k>.mp4`. Cost it first. Attach the identity stills;
-   attach the reference clip only if §1's terms are met, which recasting rules out.
+1. **Generate** one take per `${CLAUDE_PLUGIN_ROOT}/prompts/generation.md`, with the
+   model from **Model** above, into `output/<id>/take.v<n>.t<k>.mp4`. Cost it first and
+   check the quote against what is left. Attach the identity stills; attach the
+   reference clip only if §1's terms are met, which recasting rules out.
 2. **Check the container** — `generation.md` §5. A take at the wrong length, silent, or
-   without the scripted line is dead. Record why, spend the next iteration, do not judge
-   it.
+   without the scripted line is dead. Record why and loop; a dead take still spent its
+   credits, so charge it to the budget like any other.
 3. **Judge** per `${CLAUDE_PLUGIN_ROOT}/prompts/judge.md`, in its order. Meaning first
    and blind: if the candidate loses the premise where the reference holds it, do not
-   build the sweep artifacts — revise the spec and the prompt, and spend the next
-   iteration.
+   build the sweep artifacts — revise the spec and the prompt, and loop.
 4. **Act on the verdict**, per `judge.md` step 4:
    - **ships** → done. Run `vg post chain` anyway; it is free and it is worth running on
      a clip that already ships. Re-measure, and keep the post pass only if nothing
      visible broke.
    - **signal mismatch only** → `${CLAUDE_PLUGIN_ROOT}/prompts/post.md`. Free, so fix and
-     re-judge without spending an iteration.
+     re-judge without spending anything.
    - **a defect in one span, the rest usable** → `${CLAUDE_PLUGIN_ROOT}/prompts/surgery.md`.
-     Costs an iteration.
+     A patch is a paid call; price it against what is left before starting it.
    - **premise or domain broken** → back to `compile.md`, revise, regenerate whole.
-     Costs an iteration.
 
 Carry what you learned into the next prompt revision rather than re-rolling the same
 one: a clause that failed twice becomes a reference image, per `generation.md` §1.
@@ -179,11 +211,12 @@ one: a clause that failed twice becomes a reference image, per `generation.md` �
 Write `output/<id>/report.md` and summarise it in the reply. It must say:
 
 - the ship / do-not-ship call, and the take it refers to
-- every iteration: what was generated, what it cost, what the verdict was, what changed
+- every call: what was generated, what it cost, what the verdict was, what changed
+- **credits spent against the budget**, as a running total and a final figure
 - what the blind readers said, against what they said about the reference
 - **what was not resolved** — every `cannot_tell` that could have carried severity 4.
   A report that lists only defects is indistinguishable from one that did not look
 - every place this file's autonomy table was used, and what was chosen
-- what the next iteration would have tried, if the budget ran out
+- what it would have tried next, if the budget ran out
 
 Then print the path to the take that ships, or to the best one if none does.

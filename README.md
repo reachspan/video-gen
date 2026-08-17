@@ -46,18 +46,21 @@ variable mode, so an agent cannot complete it for you. Do it once before the fir
 
 ## Use
 
-    /video-gen:recreate <url-or-path> [instructions] [--max-iterations N]
+    /video-gen:recreate <url-or-path> [instructions] [--max-credits N] [--model NAME]
 
 ```
 /video-gen:recreate https://www.instagram.com/reel/ABC123/
 /video-gen:recreate ./clip.mp4 keep the original cast, move it to a garage
-/video-gen:recreate ABC123 --max-iterations 5
+/video-gen:recreate ABC123 --max-credits 400 --model veo3_1
 ```
 
 It takes an Instagram reel, another video URL, or a local file. **It runs end to end
 without stopping to ask** — interrupt it if you want it steered. Defaults:
 
-- **Three video generations**, then it stops and reports. `--max-iterations N` to change it.
+- **150 Higgsfield credits**, then it stops and reports. Everything billed counts —
+  takes, patches and casting stills alike. `--max-credits N` to change it.
+- **Seedance 2.0** for video. `--model NAME` for anything else in `higgsfield model
+  list --video`.
 - **Every main character is recast** with a generated face, unless you say otherwise.
 - **Everything lands in `output/<id>/`.** `targets/` holds the original reference and
   nothing else, so a run can be deleted and repeated without downloading anything again.
