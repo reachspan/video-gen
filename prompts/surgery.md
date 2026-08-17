@@ -77,9 +77,12 @@ Negatives go inline: there is no `negative_prompt` on any Seedance endpoint.
 
 ## 4. Generate
 
-Use a model that accepts a start frame **and** an end frame. Confirm which modes and
-parameters the current one exposes before building the call — anchor frames have been
-restricted to a specific reference mode rather than available in plain text-to-video:
+`generation.md` owns the call — model checks, costing, batching, collection. A patch
+changes four things about it.
+
+**Anchor frames.** Use a model that accepts a start frame **and** an end frame, and
+confirm which modes expose them: anchors have been restricted to a specific reference
+mode rather than being available in plain text-to-video.
 
     higgsfield model get <model>
 
@@ -89,9 +92,15 @@ restricted to a specific reference mode rather than available in plain text-to-v
       --start-image a.png --end-image b.png \
       --duration <minimum> --resolution 720p --aspect_ratio 9:16 --wait
 
-**Turn audio generation off** if it defaults on. The patch would otherwise arrive
-with its own invented audio and you would be splicing an audio seam as well as a
-picture one; keep the parent clip's audio and lay the patched picture under it.
+**Audio off** if it defaults on. The patch would otherwise arrive with its own invented
+audio and you would be splicing an audio seam as well as a picture one; keep the parent
+clip's audio and lay the patched picture under it.
+
+**No reference clip.** The anchors already fix the camera, the framing and the
+exposure, and they come from the shot itself rather than from the original.
+
+**Keep the identity and prop images.** The same files the parent take used, unchanged,
+or the patched span comes back with a different person in it.
 
 Budget several attempts.
 

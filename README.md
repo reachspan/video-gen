@@ -37,7 +37,11 @@ page load and prepend it to `DOC_IDS`.
 1. **Compile** the reference into a spec and a prompt.
 2. **Check the prompt** against the spec before spending anything — free, and it
    catches the mistakes that would otherwise cost a whole generation.
-3. **Generate.**
+3. **Generate** a take. The original clip goes in as a video reference every time, for
+   the camera and the room; every character who is not in that clip gets a generated
+   face image first, because identity written as text drifts and comes back
+   better-looking than it should; a prop that text keeps getting wrong gets a reference
+   image too, which is far cheaper than another video attempt.
 4. **Judge** the result, meaning first: agents who have not been told what the shot
    was supposed to be watch it blind alongside the original and say what they think
    it is. Only a clip that still means something gets the frame-by-frame sweep, where

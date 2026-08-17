@@ -439,28 +439,15 @@ into instruction.
 
 ### Swapping the character
 
-Generate the new identity with `face-gen.md`, then split the references explicitly:
+Generate the new identity with `face-gen.md` — every synthetic character gets an image,
+and text-only identity is not an option. The prompt's `REFERENCES` block then has to
+split what each reference supplies from what it must not: take the person from the face
+image, take only the camera and the room from the reference clip. Without that second
+half the original performer leaks back in.
 
-> @Image 1 is the man. @Video 1 is the camera and the room. Take the face, head,
-> build, skin and shirt from @Image 1 and keep them exactly. Take ONLY the camera
-> behaviour, shot size, subject distance and exposure from @Video 1 — do NOT take the
-> person from @Video 1, and do NOT copy any logo, badge or printed mark from it.
-
-Without that second half the original performer leaks back in.
-
-### When to reach for an image instead of text
-
-Generate a reference image whenever the thing is easier to *show* than to describe,
-and feed it in as an additional reference:
-
-- a prop whose exact geometry matters, or which must be unbranded and worn
-- a spatial arrangement — who is where, what is cropped by which edge
-- a costume or a specific material
-- anything you have already failed to get right in text twice
-
-Stills are cheap relative to video. A round of image iteration costs a fraction of
-one video generation and removes an ambiguity that would otherwise be re-rolled on
-every attempt.
+`generation.md` owns which references get attached and what the block has to say about
+each of them; write the block from there. It is also where the rule lives that a prop
+text keeps getting wrong should become an image rather than a third rewrite.
 
 ### Other user changes
 
@@ -477,5 +464,5 @@ usually free; a change to the mechanism is a different video.
 that no clause contradicts the premise, the affect or the composition. It is free and
 it catches the class of failure that costs a whole generation.
 
-Iterate until it passes. Then hand off to `judge.md`, which owns everything from
-generation onward.
+Iterate until it passes. Then hand off to `generation.md`, which attaches the
+references and makes one call, and from there to `judge.md`.
