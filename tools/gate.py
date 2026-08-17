@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Pre-generation gates. Run before spending credits.
 
-G2 element coverage  - every required element must survive into the prompt
-G3 constraint conflict - no prompt clause may contradict the premise
+  gate.py INTENT.json PROMPT.txt
+
+G1 element coverage    - every required element must survive into the prompt
+G2 constraint conflict - no prompt clause may assert a forbidden sentence
+G3 affect/composition  - nor a forbidden affect or framing
 
 A constraint added for one reason can delete a required element as a side effect,
 and nothing downstream will catch it: every other check in the pipeline measures
@@ -11,8 +14,8 @@ import json, re, sys
 
 STOP = set("""a an the of in on at to and or with his her its this that is are be as
 for from into by up out over under near just only very much each both all some no not
-so that it he she they them their there here what which who whom whose about roughly
-about approximately across around""".split())
+so it he she they them their there here what which who whom whose about roughly
+approximately across around""".split())
 
 
 def toks(s):
@@ -37,7 +40,7 @@ def main(intent_path, prompt_path, thresh=0.34):
     fails = []
 
     print(f"== {prompt_path.split('/')[-1]} ==")
-    print("\nG2 element coverage")
+    print("\nG1 element coverage")
     for el in intent["elements"]:
         if el["necessity"] != "required":
             continue
@@ -49,11 +52,11 @@ def main(intent_path, prompt_path, thresh=0.34):
         if not ok:
             print(f"         function: {el['function'][:78]}")
             print(f"         absent:   {', '.join(sorted(want - hit)[:8])}")
-            fails.append(f"G2 missing required element '{el['id']}'")
+            fails.append(f"G1 missing required element '{el['id']}'")
 
-    # Sentence-scoped so a phrase must actually be asserted together. Document-wide
-    # token matching produced false positives ("wide" from "wide phone lens" plus
-    # "shot" from "medium shot" => phantom "wide shot"), and a noisy gate gets ignored.
+    # Sentence-scoped, so a phrase counts as asserted only where it appears
+    # together. Matching across the whole document instead invents phrases out of
+    # tokens from unrelated clauses, and a noisy gate gets ignored.
     sents = [s for s in re.split(r"[.\n]", re.sub(r"\s+", " ", prompt.lower())) if s.strip()]
 
     def asserted(phrase, need=0.8):
@@ -65,24 +68,24 @@ def main(intent_path, prompt_path, thresh=0.34):
                 return s.strip()
         return None
 
-    print("\nG3 constraint conflict")
+    print("\nG2 constraint conflict")
     for f in intent["forbidden_assertions"]:
         hit = asserted(f)
         if hit:
             print(f"  [FAIL] forbidden assertion '{f}'")
             print(f"         found in: \"{hit[:88]}\"")
-            fails.append(f"G3 prompt asserts forbidden '{f}'")
+            fails.append(f"G2 prompt asserts forbidden '{f}'")
         else:
             print(f"  [OK ] not asserted: '{f}'")
 
-    print("\nG4 affect / composition")
+    print("\nG3 affect / composition")
     for key, sec in (("forbidden_affect", "performance"), ("forbidden", "composition")):
         for bad in intent[sec].get(key, []):
             hit = asserted(bad, need=1.0)
             if hit:
                 print(f"  [FAIL] {sec} forbids '{bad}'")
                 print(f"         found in: \"{hit[:88]}\"")
-                fails.append(f"{sec} forbids '{bad}'")
+                fails.append(f"G3 {sec} forbids '{bad}'")
             else:
                 print(f"  [OK ] not asserted: '{bad}'")
 

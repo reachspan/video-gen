@@ -9,7 +9,7 @@ recreates. What it reads, and what each of those does NOT do:
 
 | file | job | does NOT |
 |---|---|---|
-| `docs/pitfalls.md` | catalogue of what goes wrong, `S1`–`S5` and `T1`–`T15` | say how to check any of it |
+| `docs/pitfalls.md` | catalogue of what goes wrong: the `S` ids and the `T` ids | say how to check any of it |
 | `docs/evidence.md` | how to read the artifacts and the metrics | list pitfalls, or decide |
 | `tools/sweep.py plan` | the per-pitfall procedure for *this* clip, and the work packages | judge what it finds |
 | `tools/vq.py measure` | distance from the reference | decide anything |
@@ -22,11 +22,10 @@ reference's artifacts alongside the candidate's. The metrics are only defined as
 comparison in the first place.
 
 That is not diligence for its own sake, and it is not optional. No tool here separates
-generated footage from real (`docs/evidence.md`). A slit-scan through a static
-background draws straight lines legitimately. A reader asked whether a clip is
+generated footage from real (`docs/evidence.md`), and a reader asked whether a clip is
 generated will say yes about real footage often enough that the answer alone means
-little. Each of those failure modes is caught by having the reference in the batch, and
-none of them is caught by a threshold.
+little. Both failure modes are caught by having the reference in the batch, and neither
+is caught by a threshold.
 
 So the bar is what the footage being recreated already scores. A candidate is not
 being asked to be perfect.
@@ -41,8 +40,7 @@ being asked to be perfect.
 **Meaning first, and it is a hard gate.** A clip that has lost its premise gets fixed
 by revising the spec and regenerating whole — which discards every artifact step 3
 would have built. Semantic failure is also the one class no measurement here can see,
-so it has to be caught by a viewer rather than measured. Sweeping tiles on a clip that
-means nothing is expensive work that reads like diligence and decides nothing.
+so it has to be caught by a viewer rather than measured.
 
 **No two steps ask the same question.** Every located defect belongs to step 3, which
 reads tiles at 4x with a stated coverage property; a reader hunting the same tells on

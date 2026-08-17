@@ -9,11 +9,12 @@
 Order is fixed: photometric, then motion, then grain. Motion resamples and would
 decorrelate grain from the luma profile it was fitted to.
 """
-import subprocess, sys
+import os, sys
 import cv2
 import numpy as np
 from scipy import ndimage
-from vid import read, write, probe, luma, luma_profile, count, spread, blocks, read_at
+from vid import (read, write, probe, luma, luma_profile, count, spread, blocks,
+                 read_at, pairs, to_gray, CENTRES)
 
 RNG = np.random.default_rng(7)
 
@@ -31,9 +32,6 @@ def sample(path, k):
     return np.stack([f[i] for i in idx])
 
 
-CENTRES = np.array([32, 96, 160, 224], float)
-
-
 def clip_stats(F, chunk=16):
     """Fraction of pixels at each rail, computed in chunks to bound memory."""
     hi = lo = tot = 0
@@ -43,14 +41,16 @@ def clip_stats(F, chunk=16):
     return hi / tot * 100, lo / tot * 100
 
 
+def levels(v, rimax, romin):
+    """The grade itself: clip at rimax, lift the floor to romin. v in [0, 1],
+    out in [0, 255] and unquantised, so the solver and the dithered apply below
+    stay the same transform."""
+    return (np.clip(v / rimax, 0, 1) * (1 - romin) + romin) * 255.0
+
+
 def levels_lut(rimax, romin):
     v = np.arange(256, dtype=np.float32) / 255.0
-    return np.rint((np.clip(v / rimax, 0, 1) * (1 - romin) + romin) * 255
-                   ).astype(np.uint8)
-
-
-def apply_lut(F, lut):
-    return cv2.LUT(F, lut)
+    return np.rint(levels(v, rimax, romin)).astype(np.uint8)
 
 
 def exposure(ref, cand, out=None):
@@ -58,9 +58,8 @@ def exposure(ref, cand, out=None):
 
     Solved on RGB because the transform is per-channel while the target statistic
     is luma, which only rails when all three channels do. A global levels map can
-    only reach the right regime: response near the target is steep enough that a
-    0.002 change in rimax swings clipping several-fold. A masked window-region
-    lift is the better approach.
+    only reach the right regime, not the exact figure: response near the target is
+    steep enough that a 0.002 change in rimax swings clipping several-fold.
     """
     hi_t, lo_t = clip_stats(sample(ref, 48))
     C = read(cand)
@@ -74,7 +73,7 @@ def exposure(ref, cand, out=None):
     P = flat[idx].reshape(1, -1, 3)
 
     def tails(rimax, romin):
-        Y = luma(apply_lut(P, levels_lut(rimax, romin)))
+        Y = luma(cv2.LUT(P, levels_lut(rimax, romin)))
         return float((Y >= 254).mean() * 100), float((Y <= 1).mean() * 100)
 
     grid = np.arange(0.90, 1.0005, 0.0005)
@@ -91,8 +90,7 @@ def exposure(ref, cand, out=None):
     # whichever luma band it lands in. Chunked to bound memory.
     G = np.empty_like(C)
     for i in range(0, len(C), 16):
-        x = C[i:i + 16].astype(np.float32) / 255.0
-        y = (np.clip(x / rimax, 0, 1) * (1 - romin) + romin) * 255.0
+        y = levels(C[i:i + 16].astype(np.float32) / 255.0, rimax, romin)
         y += RNG.uniform(-0.5, 0.5, y.shape).astype(np.float32)
         G[i:i + 16] = np.clip(np.rint(y), 0, 255).astype(np.uint8)
     print(f"solved     rimax={rimax:.4f} romin={romin:.4f}")
@@ -118,22 +116,17 @@ def shake_path(n, fps, amp):
     return amp * series(), amp * series(), 0.06 * amp * series()
 
 
-def displacement(path, nblocks=3, blocklen=16):
+def displacement(path):
     """Per-frame global translation magnitude, in pixels.
 
     Read in contiguous blocks spread across the clip: the pairs must be adjacent
     for phase correlation to mean anything, but taking them all from the opening
     seconds measures how the shot starts, not how it moves.
     """
-    idx = blocks(count(path), nblocks, blocklen)
+    idx = blocks(count(path))
     f = read_at(path, [i for b in idx for i in b])
-    d = []
-    for b in idx:
-        for u, v in zip(b, b[1:]):
-            A = cv2.cvtColor(f[u], cv2.COLOR_RGB2GRAY).astype(np.float32)
-            B = cv2.cvtColor(f[v], cv2.COLOR_RGB2GRAY).astype(np.float32)
-            d.append(np.hypot(*cv2.phaseCorrelate(A, B)[0]))
-    return np.array(d)
+    return np.array([np.hypot(*cv2.phaseCorrelate(to_gray(f[u]), to_gray(f[v]))[0])
+                     for u, v in pairs(idx)])
 
 
 def shake(cand, out=None, amp=None, ref=None):
@@ -185,7 +178,8 @@ def chain(ref, cand, out):
     exposure(ref, cand, a)
     shake(a, b, ref=ref)
     grain(ref, b, out)
-    subprocess.run(["rm", "-f", a, b])
+    for tmp in (a, b):
+        os.remove(tmp)
 
 
 if __name__ == "__main__":

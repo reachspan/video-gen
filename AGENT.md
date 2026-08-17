@@ -16,8 +16,7 @@ this one only points at them.
 | one defect repaired without re-rolling the whole shot | `prompts/surgery.md` |
 | exposure, shake or grain brought closer to the reference | `prompts/post.md` |
 | to know what tends to go wrong in this format | `docs/pitfalls.md` |
-| to read what the artifacts and the metrics show | `docs/evidence.md` |
-| to know what a delivered file carries besides the picture | `docs/evidence.md` |
+| to read the artifacts and the metrics, or to know what a delivered file carries besides the picture | `docs/evidence.md` |
 
 If the request covers several steps, this is the order:
 
@@ -25,8 +24,7 @@ If the request covers several steps, this is the order:
     face-gen.md ┘                                         └─→ post.md
 
 `face-gen.md` runs before `generation.md`, not after `compile.md` in particular: every
-character who is not taken from the reference clip needs an image before a take can be
-bought.
+main character needs an image before a take can be bought.
 
 `generation.md` produces one clip per run. Generation is a numbers game, so expect to
 call it repeatedly for the same prompt.
@@ -47,7 +45,8 @@ slightly different orders is worse than one file being a little thin.
 - **Tools print their own instructions.** `sweep.py plan` writes the per-pitfall
   procedure and the brief each sweep agent works from, because that text has to make
   sense to an agent with no other context. `judge.md` says who gets it and does not
-  repeat it.
+  repeat it. Every other tool's docstring gives usage and points at `evidence.md`
+  rather than restating what its numbers mean.
 
 The blockquoted blocks inside the prompts are text to hand to a subagent word for word,
 not instructions for whoever is reading. They repeat things on purpose, because their

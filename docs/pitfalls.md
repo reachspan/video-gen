@@ -1,19 +1,17 @@
 # Pitfalls — a catalogue of what goes wrong
 
-Filtered to **this** format: 4–10s vertical, one seated speaker, a held prop, natural
-window light, delivered through a platform re-encode. Distilled from ~190 researched
-entries across 8 axes, deduped down to what actually bites here.
+Filtered to **this** format: vertical short-form video, one seated speaker, a held
+prop, natural window light, delivered through a platform re-encode.
 
 **This file is a catalogue.** It names each failure and says how it reads on screen.
 It does not say how to sweep for one, who sweeps it, or what to do when one turns up.
 The procedure for every id — which artifact to open and what to do with it — is
 emitted per clip by `python tools/sweep.py plan`.
 
-**Where entries come from.** The target is a clip that could have been filmed, so an
-entry earns its place by naming a rule of physics, physiology or trade practice that
-the picture breaks, and by saying what would falsify it. Tells drawn from how
-generated footage is *made*, rather than from how the world *works*, have a poor
-record here: every entry ever demoted to "do not chase" was one of those.
+**What earns an entry.** The target is a clip that could have been filmed, so an entry
+has to name a rule of physics, physiology or trade practice that the picture breaks,
+and say what would falsify it. A tell drawn from how generated footage is *made*,
+rather than from how the world *works*, belongs on the do-not-chase list instead.
 
 Severity is for this format, not in general. Tier 0 fails silently and kills the
 clip outright; Tier 1 is what a person can see; the vendor defaults in Tier 2 are
