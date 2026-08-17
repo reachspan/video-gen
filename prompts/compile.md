@@ -130,25 +130,38 @@ being checked. No single track could know it.
 ### When observations and expectations disagree
 
 Tracks disagree with each other, and your own eyes disagree with themselves at different
-magnifications. Neither instrument outranks the other, so do not resolve it by picking a
-side, and do not resolve it by zooming again.
+magnifications. Do not resolve it by picking a side, and do not assume another look will
+help.
 
-**Find the reading that satisfies both.** A conflict usually means an observation is
-being over-extended, not that it is wrong. An accurate description of a *part* can carry
-a false implication about the whole — what was seen is right, what it was taken to mean
-is not. Ask what arrangement would produce both the thing that was observed and the thing
-the scene requires.
+**Visual error here is systematic, not noisy.** A misread does not average out with more
+samples. It survives magnification, it recurs at every timestamp, and separate readers
+reproduce it because they share the failure mode rather than because it is true. So a
+second look agreeing with the first confirms very little, and two agents agreeing with
+each other confirms little more — they are not independent when they fail the same way.
+Repetition launders nothing, and confidence grows with it regardless.
+
+**An observation that contradicts physics or plain sense should be de-weighted, not
+re-checked.** If the literal reading requires a person to have one arm, an object to
+hold itself up, or an action nobody would perform, the likeliest explanation is that the
+observation is wrong — and going back for another look will usually return the same
+answer with more conviction attached. Prefer the account that is physically coherent.
+Looking again is worth it only when there is a specific reason to think a different view
+would resolve it; otherwise it costs time and buys false certainty.
+
+None of which makes observation worthless or reasoning sovereign. Most conflicts dissolve
+once you notice that an observation is being over-extended rather than being false: an
+accurate description of a *part* can carry a false implication about the whole. Ask what
+arrangement would produce both the thing that was seen and a scene that works.
 
 Two checks that usually find it:
 
 - **Count what must exist.** Every person in the shot has two hands and two arms whether
   or not you can see them. An arrangement that leaves one unaccounted for is the wrong
-  arrangement, whoever reported it.
-- **Ask whether the scene still works.** If taking an observation literally means a
-  person has one arm, or a prop nobody is holding, or an action nobody would perform,
-  that is a reason to look again — not a discovery about the video.
+  arrangement, whoever reported it and however often.
+- **Follow the literal reading to its consequences.** If those consequences are absurd,
+  the reading is the problem, not the world.
 
-If no reading satisfies both, record it in `known_blind_spots` rather than forcing one.
+If nothing satisfies both, record it in `known_blind_spots` rather than forcing it.
 Either way, label how you got there: reasoning belongs in the premise and in `function`,
 `what` stays the observation. A conclusion reached by argument is fine and often right;
 one reached by argument and then written down as though it were seen is what nothing
@@ -297,6 +310,11 @@ feel obvious, and a reader who has it will confirm whatever the spec says.
 > - `contradicted` — the picture shows something else; say what it actually shows
 > - `not_visible` — will not resolve even after cropping tighter and scaling harder.
 >   A real answer, and expected
+>
+> Flag separately any claim that the picture seems to support but that could not be true
+> of a real scene — a body that would need an extra limb, an object nothing is holding up,
+> an action that would accomplish nothing. Say what makes it impossible. A claim can look
+> right in every frame and still be incoherent, and that is worth more than another look.
 >
 > Then, separately and in your own words: **for every hand and arm in the picture, say
 > whose body it belongs to and how you can tell.** Anything entering from a frame edge
