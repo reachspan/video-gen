@@ -16,7 +16,7 @@ recreates. What it reads, and what each of those does NOT do:
 
 ## Nothing here is judged in absolute terms
 
-Every step runs the **candidate and the original through the identical procedure** and
+Every step runs the **candidate and the reference through the identical procedure** and
 reads the difference. Blind readers watch both, shuffled. The sweep builds the
 reference's artifacts alongside the candidate's. The metrics are only defined as a
 comparison in the first place.
@@ -25,7 +25,7 @@ That is not diligence for its own sake, and it is not optional. No tool here sep
 generated footage from real (`docs/evidence.md`). A slit-scan through a static
 background draws straight lines legitimately. A reader asked whether a clip is
 generated will say yes about real footage often enough that the answer alone means
-little. Each of those failure modes is caught by having the original in the batch, and
+little. Each of those failure modes is caught by having the reference in the batch, and
 none of them is caught by a threshold.
 
 So the bar is what the footage being recreated already scores. A candidate is not
@@ -33,7 +33,7 @@ being asked to be perfect.
 
 ## The sequence
 
-    1  meaning     does it still mean what the original meant?    blind   → fail: stop here
+    1  meaning     does it still mean what the reference meant?    blind   → fail: stop here
     2  notice      does a fresh viewer clock it as generated?     blind   → spawned with 1, read at 4
     3  defects     what is wrong, and exactly where?              4x, whole-clip coverage
     4  decision    ship or not; if not, which fix
@@ -63,7 +63,7 @@ a control. Re-encode both to one bitrate and strip metadata:
 ```bash
 python3 - <<'EOF'
 import random, json, subprocess, pathlib
-files = ["dl/orig_4s.mp4", "gen/v4.mp4"]          # extend as needed
+files = ["dl/ref.mp4", "gen/cand.mp4"]            # extend as needed
 names = ["clip_a.mp4", "clip_b.mp4"]
 random.shuffle(files)
 pathlib.Path("blind").mkdir(exist_ok=True)
@@ -158,7 +158,7 @@ establish, the set dressing has failed regardless of the issue list.
 
 ### The gate
 
-Compare each reading against the same reading of the original, never against an
+Compare each reading against the same reading of the reference, never against an
 absolute standard.
 
 - **The original passes and the candidate does not** → **stop here.** Name which of
@@ -201,7 +201,7 @@ been told what to look for — which is the reaction the clip will actually get.
 **It has no pass mark and it does not gate.** Its verdict on the candidate alone
 carries little: the skeptic is told to default to "generated", so it calls real
 footage generated often enough that the absolute rate is noise. What carries is the
-difference between the two clips, which is why the original is in the batch.
+difference between the two clips, which is why the reference is in the batch.
 
 It is used twice, and adjudicates nothing either time: `what_drove_it` orders the
 packages in step 3, and the differential is read against the finished table in step 4.

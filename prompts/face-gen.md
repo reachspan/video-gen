@@ -86,9 +86,9 @@ Check, in this order:
 4. **Ears, hairline, jewellery** — the usual sites of quiet geometric nonsense.
 5. **Hands**, if in frame.
 
-Do **not** chase blink asymmetry or left/right catchlight mismatch. Both are
-anti-pitfalls: healthy blinking is symmetric, and catchlight mismatch is a
-StyleGAN-era artifact that diffusion models do not produce.
+Read the do-not-chase list in `docs/pitfalls.md` before acting on anything you find.
+Several of the most plausible-looking face faults are on it, and correcting one makes
+the image worse rather than better.
 
 ## Steering from the user
 

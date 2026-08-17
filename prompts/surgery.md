@@ -4,22 +4,17 @@ Regenerate a bad span of an otherwise good clip, pinned at both ends by real fra
 so it splices back in. For a defect that occupies part of the runtime and leaves the
 rest usable.
 
-**Not for:** a semantic failure (wrong premise, wrong performance, missing element) —
-that is a prompt problem, so fix the prompt and regenerate whole, per `compile.md`.
-**Not for:** a signal mismatch (exposure, shake, grain) — that is `post.md`, and it
-is free.
-
-Surgery is for something that is *wrong in a place*: an object that morphs, a prop
-that re-routes, a hand that breaks and recovers, a tail that collapses.
+Surgery is for something *wrong in a place*: an object that morphs, a prop that
+re-routes, a hand that breaks and recovers, a tail that collapses. `judge.md` decides
+which of the three fixes a defect belongs to — if it sent you here, this is the file.
 
 ## Why patch instead of regenerating
 
-Not primarily cost. **No Seedance endpoint has exposed a seed**, so a full
-regeneration re-rolls every element of the shot — the framing that was right, the
-performance that was right, the set dressing that was right. Documented reject ratio
-on real production is 64:1. A patch keeps everything that already works and re-rolls
-only the span that does not. Check whether the endpoint you are using still lacks a
-seed; if one appears, this argument weakens considerably.
+Not primarily cost. With no exposed seed (`docs/pitfalls.md`), a full regeneration
+re-rolls every element of the shot — the framing that was right, the performance that
+was right, the set dressing that was right. A patch keeps what already works and
+re-rolls only the span that does not. Check whether the endpoint you are using still
+lacks a seed; if one appears, this argument weakens considerably.
 
 Cost is secondary and the comparison is close. A patch costs a fixed amount set by
 the minimum duration, whatever the clip's length, while a full regeneration scales
@@ -47,7 +42,7 @@ hotspot is not a location.
 
 ## 2. Choose the anchors
 
-The patch is pinned by two real frames from the original. Pick them **outside** the
+The patch is pinned by two real frames from the parent clip. Pick them **outside** the
 defect, and pick them well:
 
 - A few frames of clearance either side of the bad span, so the model is not asked to
@@ -68,7 +63,7 @@ Inspect both at 4x. An anchor carrying a defect propagates it into the patch.
 
 ## 3. Write the patch prompt
 
-Reuse the original prompt's `GLOBAL STYLE`, `LOCATION`, `LIGHTING` and `CAMERA`
+Reuse the parent clip's prompt for `GLOBAL STYLE`, `LOCATION`, `LIGHTING` and `CAMERA`
 blocks unchanged — the patch has to belong to the same shot. Replace the action
 blocks with **only what happens between the two anchors**, and say what must not
 change:
@@ -96,9 +91,9 @@ restricted to a specific reference mode rather than available in plain text-to-v
 
 **Turn audio generation off** if it defaults on. The patch would otherwise arrive
 with its own invented audio and you would be splicing an audio seam as well as a
-picture one; keep the original track and lay the patched picture under it.
+picture one; keep the parent clip's audio and lay the patched picture under it.
 
-Without a seed, A/B needs N per arm, not pairs. Budget several attempts.
+Budget several attempts.
 
 ## 5. Check the patch before splicing
 

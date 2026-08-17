@@ -4,9 +4,10 @@ For a candidate that is semantically right and looks wrong in a way that is pure
 photometric or motion: exposure that never wanders, highlights that never clip, a
 camera held too still, grain that does not match the reference's profile.
 
-**Not for:** anything a viewer would describe in words — a wrong premise, a prop that
-does nothing, a hand that morphs. Those are `compile.md` and `surgery.md`. Post moves
-numbers, and numbers were never the thing that made a clip read as generated.
+Post moves numbers, and numbers were never the thing that made a clip read as
+generated — so nothing a viewer would describe in words belongs here. `judge.md`
+decides which of the three fixes a defect belongs to; if it sent you here, this is the
+file.
 
 Everything here is deterministic and free. It is the cheapest of the three fixes, so
 it is worth running on a clip that already ships.
@@ -63,10 +64,9 @@ optional to *overdo*.
 
 Negative `k1` barrels. Phone ISPs already correct distortion and lateral CA, so the
 main camera after correction is nearly rectilinear — over-applying makes the clip
-read as an uncorrected action cam, a different kind of wrong. **Do not add chromatic
-aberration at all here:** it measured 0 ppm on the reference, because 4:2:0
-subsampling destroys it. Vignetting is the easiest to overdo and reads instantly as a
-2013 Instagram filter.
+read as an uncorrected action cam, a different kind of wrong. Vignetting is the
+easiest to overdo and reads instantly as a 2013 Instagram filter. Chromatic aberration
+is on the do-not-chase list in `docs/pitfalls.md`; do not add it here either.
 
 **Rolling-shutter shear** (stage 3, after shake): derive it from the *same*
 trajectory that drives the shake — `shx(t) = C · dx/dt` on horizontal velocity —

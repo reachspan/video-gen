@@ -136,13 +136,14 @@ def tiles(path, outdir, nframes=3):
 PACKAGES = [
     ("motion-and-life", ["T1", "T2", "T3", "T8", "T11", "T13"],
      "strip_* — all of them, candidate and reference — plus motion_by_block. No "
-     "tiles. You are judging whether the body is alive, whether a hand held the "
-     "camera, and whether the tail degrades."),
+     "tiles. You are judging whether every body in frame is alive, whether a hand "
+     "held the camera, and whether the tail degrades. The edge columns carry the "
+     "secondary figures and count the same as the centre ones."),
     ("face-and-gaze", ["T4", "T5", "T9"],
-     "tiles covering the head, sampled and odd_* alike."),
-    ("hands-and-props", ["T6", "T7", "T15", "T9"],
-     "tiles covering the hands and anything held, sampled and odd_* alike, plus "
-     "the permanence_hotspots boxes."),
+     "tiles covering every head in frame, sampled and odd_* alike."),
+    ("hands-and-props", ["T6", "T7", "T15", "T16", "T9"],
+     "tiles covering the hands and anything held, by any person in frame, sampled "
+     "and odd_* alike, plus the permanence_hotspots boxes."),
     ("scene-and-optics", ["T10", "T12", "T9"],
      "tiles outside the subject box, sampled and odd_* alike. If subject_box "
      "covers most of the frame there may be very few; say how many you had, and "
@@ -154,18 +155,22 @@ PACKAGES = [
 
 PLAN = [
     ("T1", "Statue torso", "subject_stillness",
-     "strip_col_* through the torso. A living body wavers; a frozen one draws "
-     "straight horizontal lines. Check every column strip, not just the centre."),
+     "strip_col_* through every torso in frame. A living body wavers; a frozen one "
+     "draws straight horizontal lines. Check every column strip, not just the "
+     "centre: the edge columns cross the secondary figures, and one of those "
+     "holding still is the same defect as the speaker holding still."),
     ("T2", "No breathing", "-",
-     "strip_col_* crossing the shoulder or collar line. Judge the SIGNATURE, not "
+     "strip_col_* crossing the shoulder or collar line of anyone whose chest is in "
+     "frame. Judge the SIGNATURE, not "
      "a rate: a real chest edge rises and falls continuously, a generated one "
-     "holds a dead flat line. At 12-20 breaths a minute a 4-10s clip contains "
-     "well under two cycles, so a rate is not recoverable and must not be "
+     "holds a dead flat line. At 12-20 breaths a minute a short clip contains "
+     "well under two full cycles, so on anything that brief a rate is not "
+     "recoverable and must not be "
      "reported as one; a sustained flat edge is still a defect, and a wavering "
      "one still clears."),
     ("T3", "No physiological jitter", "subject_stillness",
-     "strip_col_* through the head during a pause in the action. Real heads never "
-     "hold a line even when 'still'."),
+     "strip_col_* through every head in frame during a pause in the action. Real "
+     "heads never hold a line even when 'still'."),
     ("T4", "Mask face", "-",
      "tiles on the face, sampled and odd_* alike: does anything above the eyes "
      "move? Watch muted and try to name the stressed word."),
@@ -180,8 +185,9 @@ PLAN = [
      "each and confirm the strand count and the route between hands hold. odd_* "
      "is where a brief re-route shows."),
     ("T7", "Contactless hold", "-",
-     "tiles on the grip, sampled and odd_* alike. Look for fingertip flattening, "
-     "skin blanching and a dark contact line. Absence of all three is the tell."),
+     "tiles on every grip in frame, sampled and odd_* alike, including the ones "
+     "held by a hand entering at an edge. Look for fingertip flattening, skin "
+     "blanching and a dark contact line. Absence of all three is the tell."),
     ("T8", "End-loaded collapse", "motion_by_block",
      "the right-hand end of every strip, and the last motion_by_block entry "
      "against the first. Every package also starts at the final sampled frame of "
@@ -216,6 +222,16 @@ PLAN = [
      "whole assembly, including any protruding part, not the body's bounding box. "
      "A body that sits at the edge does not make an edge intrusion if its tip "
      "reaches the middle of the frame."),
+    ("T16", "Incomplete assembly", "-",
+     "tiles covering every person and every held object, sampled and odd_* alike. "
+     "Take each one as a whole thing and try to complete it: trace every hand back "
+     "along a forearm to a shoulder or to the edge it enters from; name the parts a "
+     "tool would need in order to work and say which are present; ask what holds "
+     "each fitting up. Count whatever should be countable — limbs, strands, "
+     "conductors, fasteners — and say whether the totals can belong to one object. "
+     "Judge each tile ON ITS OWN before comparing it with any other: this fault is "
+     "the same in every frame, so it passes a cross-frame check untouched, and "
+     "T6 will not catch it."),
 ]
 
 

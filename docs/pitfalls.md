@@ -9,6 +9,12 @@ It does not say how to sweep for one, who sweeps it, or what to do when one turn
 The procedure for every id — which artifact to open and what to do with it — is
 emitted per clip by `python tools/sweep.py plan`.
 
+**Where entries come from.** The target is a clip that could have been filmed, so an
+entry earns its place by naming a rule of physics, physiology or trade practice that
+the picture breaks, and by saying what would falsify it. Tells drawn from how
+generated footage is *made*, rather than from how the world *works*, have a poor
+record here: every entry ever demoted to "do not chase" was one of those.
+
 Severity is for this format, not in general. Tier 0 fails silently and kills the
 clip outright; Tier 1 is what a person can see; the vendor defaults in Tier 2 are
 where those tells come from.
@@ -35,10 +41,15 @@ to be — which is why they are checked first, and checked blind.
 
 ## Tier 1 — human-visible
 
+These apply to **every person in frame**, not only whoever is speaking. Someone
+cropped to a forearm cannot be checked for gaze or breathing — record those sub-tests
+as not applicable and judge the rest. A secondary figure that holds still reads as
+plainly as a frozen speaker, and is easier to produce by accident.
+
 | id | tell | how it reads |
 |---|---|---|
 | `T1` | **Statue torso.** Only mouth and head animate, body frozen. The top "AI presenter" signature. | a torso or shoulder edge holding a dead straight line for the whole clip while the face moves |
-| `T2` | **No breathing.** The shoulder line never rises or falls. | a flat collar edge. A real one wavers continuously; at 12–20 breaths a minute a 4–10s clip holds well under two cycles, so the signature is the tell and a *rate* is not recoverable |
+| `T2` | **No breathing.** The shoulder line never rises or falls. | a flat collar edge. A real one wavers continuously; at 12–20 breaths a minute a short clip holds well under two full cycles, so on anything that brief the signature is the tell and a *rate* is not recoverable |
 | `T3` | **No physiological jitter.** The head is glassy-smooth, with no micro-corrections. | a head that holds a line during a pause. Real heads never do, even when "still" |
 | `T4` | **Mask face.** The mouth articulates, the upper face is static; no brow flash on emphasis. | watched muted, nothing tells you which word was stressed |
 | `T5` | **Mannequin gaze.** Eyes welded to the lens: no saccades, no repositioning, no counter-rotation when the head turns. | the eyes never move independently of the skull |
@@ -52,6 +63,7 @@ to be — which is why they are checked first, and checked blind.
 | `T13` | **AE/WB never move.** | exposure perfectly flat for the whole clip. Real footage wanders and shows at least one step response |
 | `T14` | **Beauty bias / age flattening.** An ordinary 50-year-old comes back as an attractive 32. Worst under text-only identity. | only visible across generations: several seeds resemble each other more than several real people would |
 | `T15` | **Object scale and placement.** Held objects return at the wrong size in either direction — often one part of an object rather than all of it — and edge intrusions reach too far in. | the object read against a body landmark (head height, hand breadth) does not match its real dimension; or something entering at an edge has its deepest point well inside the frame |
+| `T16` | **Incomplete assembly.** An object or a body that never resolves into one whole working thing. | parts missing that it could not function without, joins that do not close, counts that do not add up — a limb that cannot be traced from hand back to a shoulder or to the edge it enters from, a tool with no grip or power source, a fitting fastened to nothing. It is a per-frame fault, so it survives every frame-to-frame check unchanged |
 
 ---
 
