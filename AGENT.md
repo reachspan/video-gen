@@ -54,13 +54,13 @@ reader has no other context.
 
 ## Tools, one job each
 
-    tools/gate.py     prompt against intent, before generating
-    tools/vq.py       signal measurement against a reference clip
-    tools/sweep.py    inspection artifacts and the per-pitfall checklist
-    tools/post.py     deterministic fixes: exposure, shake, grain
-    tools/selftest.py injection tests for the metrics
-    tools/vid.py      shared video I/O and sampling
-    utils/ig-dl       reference clip downloader
+    vg gate       tools/gate.py      prompt against intent, before generating
+    vg vq         tools/vq.py        signal measurement against a reference clip
+    vg sweep      tools/sweep.py     inspection artifacts and the per-pitfall checklist
+    vg post       tools/post.py      deterministic fixes: exposure, shake, grain
+    vg selftest   tools/selftest.py  injection tests for the metrics
+    vg ig-dl      utils/ig-dl        reference clip downloader
+                  tools/vid.py       shared video I/O and sampling
 
 The tools measure things and build evidence. Only `judge.md` decides anything.
 
@@ -69,12 +69,34 @@ The tools measure things and build evidence. Only `judge.md` decides anything.
 
 ## Environment
 
-Run from the repo root, using the venv:
+`vg` runs the bundled tools with the bundled interpreter, wherever this is installed:
 
-    .venv/bin/python tools/vq.py measure ref.mp4 out.mp4
+    vg vq measure ref.mp4 out.mp4
+    vg doctor      every dependency, and whether the CLI is logged in
+    vg setup       build the environment; needed once, on a first run
+
+Installed as a plugin it is already on `PATH`. From a checkout, call `bin/vg` or put
+`bin/` on `PATH`.
 
 `VQ_JOBS` caps worker processes for `vq.py` and `selftest.py`. Each holds a few hundred
 MB of decoded frames, so raise it only if there is memory to spare.
 
-`targets/` holds the specs, prompts, reference images and takes for whatever is being
-worked on. It is gitignored: working state, not published output.
+## Where files go
+
+    targets/<id>.mp4    the original reference, and nothing else
+    output/<id>/        everything a run produces
+
+Keeping references separate is what lets a run be thrown away and repeated without
+fetching anything again. Inside `output/<id>/`:
+
+    spec.json               the intent spec                        compile.md
+    prompt.v<n>.txt         each prompt revision                   compile.md
+    ref.<name>.png          one identity or prop still per thing   face-gen.md
+    seg.mp4                 the reference segment, if one was cut  generation.md
+    take.v<n>.t<k>.mp4      the takes                              generation.md
+    measure.json plan.md    the evidence                           judge.md
+    sweep/ sweep_ref/       the artifacts, candidate and control   judge.md
+    blind/                  the shuffled pair and its key          judge.md
+    report.md               the decision, and what went unresolved
+
+Both directories are gitignored: working state, not published output.

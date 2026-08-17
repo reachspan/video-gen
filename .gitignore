@@ -12,3 +12,4 @@ __pycache__/
 
 # working state, not published
 targets/
+output/

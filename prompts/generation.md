@@ -4,9 +4,9 @@ Take a prompt that has passed the gate and come back with one clip: what to atta
 reference, which call to make, and what the take has to be checked for before anyone
 spends time judging it.
 
-    targets/<code>.v<n>.txt        in   — the prompt, gate-passed
-    targets/<code>.<name>.png      in   — one identity or prop reference per thing
-    targets/<code>.v<n>.t<k>.mp4   out  — the take
+    output/<id>/prompt.v<n>.txt      in   — the prompt, gate-passed
+    output/<id>/ref.<name>.png       in   — one identity or prop reference per thing
+    output/<id>/take.v<n>.t<k>.mp4   out  — the take
 
 **One candidate per run.** Everything here is a single generation, start to finish.
 Whoever called it decides whether another one is worth buying.
@@ -41,7 +41,7 @@ If the reference is longer than the segment being recreated, cut the segment out
 and attach that, so the camera behaviour it supplies is the behaviour of the seconds
 you are actually making:
 
-    ffmpeg -v error -ss 12.0 -to 16.0 -i ref_full.mp4 -c copy targets/<code>.seg.mp4
+    ffmpeg -v error -ss 12.0 -to 16.0 -i ref_full.mp4 -c copy output/<id>/seg.mp4
 
 ### An image for every main character, always
 
@@ -116,7 +116,7 @@ still, and nothing of its lighting, its background or its framing.
 
     higgsfield model list --video
     higgsfield model get <model>
-    higgsfield generate cost <model> --prompt "$(cat targets/<code>.v2.txt)" \
+    higgsfield generate cost <model> --prompt "$(cat output/<id>/prompt.v2.txt)" \
       --duration 8 --resolution 720p
 
 Never work from a price or a parameter list written down anywhere, including here. The
@@ -141,12 +141,12 @@ Cost it first. `generate cost` takes the same flags as `generate create`, so pri
 call you are about to make rather than a simplified version of it.
 
     higgsfield generate create <model> \
-      --prompt "$(cat targets/<code>.v2.txt)" \
-      --image-references targets/<code>.man.png \
-      --image-references targets/<code>.drill.png \
+      --prompt "$(cat output/<id>/prompt.v2.txt)" \
+      --image-references output/<id>/ref.man.png \
+      --image-references output/<id>/ref.drill.png \
       --duration 8 --resolution 720p --aspect_ratio 9:16 --wait
 
-Add `--video-references targets/<code>.seg.mp4` if §1 says this run wants it.
+Add `--video-references output/<id>/seg.mp4` if §1 says this run wants it.
 
 `--wait` blocks until the job lands and prints the result URL. Without it the call
 returns a job id straight away, and `higgsfield generate wait <id>` picks it back up.
@@ -161,12 +161,12 @@ Download the take beside the spec, and do not overwrite an existing one — a ta
 cannot be regenerated and has been overwritten is gone:
 
     higgsfield generate get <job_id> --json     # the result URL
-    curl -L -o targets/<code>.v2.t1.mp4 '<url>'
+    curl -L -o output/<id>/take.v2.t1.mp4 '<url>'
 
 Then confirm what actually arrived, before spending anything on looking at it:
 
     ffprobe -v error -show_entries stream=codec_type,width,height,r_frame_rate,duration \
-      -of default=noprint_wrappers=1 targets/<code>.v2.t1.mp4
+      -of default=noprint_wrappers=1 output/<id>/take.v2.t1.mp4
 
 Duration, frame rate and the presence of an audio stream are what every later step
 assumes. A take that came back at the wrong length or silent is a defective delivery

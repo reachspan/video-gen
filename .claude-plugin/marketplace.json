@@ -1,0 +1,15 @@
+{
+  "name": "reachspan",
+  "description": "Tools for recreating short-form video with AI generation and checking the result honestly.",
+  "owner": {
+    "name": "ytcs",
+    "url": "https://github.com/reachspan"
+  },
+  "plugins": [
+    {
+      "name": "video-gen",
+      "source": "./",
+      "description": "Recreate a short reference video with AI generation, and judge the result honestly. One command, end to end."
+    }
+  ]
+}

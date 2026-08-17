@@ -29,8 +29,8 @@ and the defect is a second of it, patch.
 
 You need a frame range, not an impression. Sources, in order of directness:
 
-    python tools/vq.py measure ref.mp4 out.mp4      # permanence_hotspots -> frame + box
-    python tools/sweep.py tiles out.mp4 sweep/      # odd_* names the worst frame per tile
+    vg vq measure ref.mp4 out.mp4      # permanence_hotspots -> frame + box
+    vg sweep tiles out.mp4 sweep/      # odd_* names the worst frame per tile
     # motion_by_block: which third of the clip degraded
 
 Open the frames at 4x and confirm the defect with your own eyes before spending
@@ -105,7 +105,7 @@ Budget several attempts.
 
 ## 5. Check the patch before splicing
 
-    python tools/vq.py measure out.mp4 patch.mp4
+    vg vq measure out.mp4 patch.mp4
 
 Read it as a match test, not a quality test: the patch should sit close to its parent
 clip on exposure and grain profile. `noise_luma_slope` is the useful one
@@ -121,7 +121,7 @@ with no real motion in between — reject it and re-prompt with more specific ac
 Two seams, and generated clips drift in colour between runs, so the patch will not
 match its neighbours out of the box.
 
-    python tools/post.py exposure out.mp4 patch.mp4 patch_graded.mp4
+    vg post exposure out.mp4 patch.mp4 patch_graded.mp4
 
 Conform frame rate before splicing if it differs (Seedance output is 24fps). Cut on
 the anchor frames so each anchor appears once.

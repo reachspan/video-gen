@@ -1,0 +1,6 @@
+# The measurement and post-processing tools. Installed by `vg setup`.
+opencv-python-headless
+scikit-image
+numpy
+scipy
+av

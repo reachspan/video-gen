@@ -14,10 +14,10 @@ it is worth running on a clip that already ships.
 
 ## Run it
 
-    python tools/post.py exposure REF CAND OUT    match clipping statistics to REF
-    python tools/post.py shake    REF CAND OUT    add the handheld motion deficit
-    python tools/post.py grain    REF CAND OUT    add grain to REF's luma profile
-    python tools/post.py chain    REF CAND OUT    all three, in the fixed order
+    vg post exposure REF CAND OUT    match clipping statistics to REF
+    vg post shake    REF CAND OUT    add the handheld motion deficit
+    vg post grain    REF CAND OUT    add grain to REF's luma profile
+    vg post chain    REF CAND OUT    all three, in the fixed order
 
 `REF` is the reference clip the candidate is recreating, and it must be the same one
 `vq.py measure` was run against. Every stage fits against the reference **measured in
@@ -116,7 +116,7 @@ output is slightly smaller than the input. Conform sizes before splicing anythin
 
 Re-measure, and re-judge if the clip changed materially:
 
-    python tools/vq.py measure ref.mp4 out_post.mp4
+    vg vq measure ref.mp4 out_post.mp4
 
 A post pass moves the signal metrics toward the reference by construction, so a
 better score afterwards is not evidence of anything. The check that matters is that

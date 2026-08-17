@@ -2,8 +2,8 @@
 
 Watch a reference clip and produce two artifacts:
 
-    targets/<code>.intent.json    what the shot MEANS and which parts are load-bearing
-    targets/<code>.v<n>.txt       the prompt that recreates it
+    output/<id>/spec.json         what the shot MEANS and which parts are load-bearing
+    output/<id>/prompt.v<n>.txt   the prompt that recreates it
 
 The spec exists so that a change — swapping the character, moving the setting,
 altering a prop — can be made without silently destroying the thing that made the
@@ -40,9 +40,9 @@ something to be corrected by.
 Look before writing. The sweep tools work on a reference just as well as on a
 candidate, and they are the cheapest way to see everything that is actually there:
 
-    python tools/sweep.py strips ref.mp4 refsweep/    # blocking and motion over time
-    python tools/sweep.py tiles  ref.mp4 refsweep/    # every region at 4x
-    python tools/sweep.py plan   ref.mp4              # what the tiles and strips are
+    vg sweep strips ref.mp4 refsweep/    # blocking and motion over time
+    vg sweep tiles  ref.mp4 refsweep/    # every region at 4x
+    vg sweep plan   ref.mp4              # what the tiles and strips are
 
 The tiles matter most. Set dressing, edge intrusions and props are exactly what gets
 missed on a casual watch and exactly what carries the meaning. They are written as a
@@ -455,7 +455,7 @@ usually free; a change to the mechanism is a different video.
 
 ## 7. Gate before generating
 
-    python tools/gate.py targets/X.intent.json targets/X.v4.txt
+    vg gate output/<id>/spec.json output/<id>/prompt.v4.txt
 
 `G2` checks that every required element survived into the prompt; `G3` and `G4` check
 that no clause contradicts the premise, the affect or the composition. It is free and
