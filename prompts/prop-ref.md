@@ -1,29 +1,19 @@
-# prop-ref — finding a reference photograph for an object
-
-Find a photograph of a real object, to be passed into video generation as the prop
-reference. One image per object, reused unchanged for every take.
+Find a photograph of a real object. One image per object, reused unchanged.
 
     output/<id>/ref.<name>.png          the photograph, cropped and ready to attach
     output/<id>/ref.<name>.source.txt   where it came from, and what it supplies
 
-`generation.md` §1 decides which objects are worth a reference and why. This file is how
-you get one. It costs nothing, so the only budget it spends is your attention.
+Which objects: `generation.md` §1. Free.
 
-## Why a photograph and not a generated still
+## Why a photograph
 
-A generated prop image is a generation, and it carries every failure a generation
-carries. It comes back with parts missing that the thing could not work without, joins
-that do not close, a fitting fastened to nothing (`T16`); at the wrong size against a
-hand (`T15`); wearing a wordmark that is almost a real one (`T9`). Attaching it does not
-remove those faults from the take — it *specifies* them. The video model reproduces the
-reference faithfully, which is the whole reason for attaching one, so a wrong object
-described precisely is worse than a right object described loosely in text.
+A generated prop image is a generation: incomplete (`T16`), wrong scale (`T15`),
+almost-right wordmark (`T9`). Attaching it specifies those faults into the take.
+The video model reproduces the reference faithfully, so a wrong object described
+precisely is worse than a right object described loosely.
 
-Identity is the exception, and it is why `face-gen.md` still generates. An invented
-person has no ground truth to be wrong against, so a plausible face is a correct face.
-An object that exists in the world does have one: there is a right answer about how many
-conductors that fitting has and which end the thread is on, and a photograph of a real
-one is right by construction where a rendering is only ever plausible.
+Identity is the exception (`face-gen.md`): an invented face has no ground truth.
+An object that exists does — a photograph is right; a rendering is only plausible.
 
 ## What to look for
 
@@ -85,8 +75,7 @@ capped (`generation.md` §1), and a composite is a picture of two objects.
 
 ## Inspect before attaching
 
-Open it as a tight crop upscaled 4x, the same as any other artifact in this repo. A full
-image arrives downsampled, and the variant details that matter are small:
+Open it as a tight crop upscaled 4x (`docs/evidence.md`):
 
     ffmpeg -i output/<id>/ref.drill.png -vf "crop=400:400:X:Y,scale=1600:1600:flags=lanczos" crop.jpg
 

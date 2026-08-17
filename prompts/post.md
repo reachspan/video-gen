@@ -1,16 +1,8 @@
-# Post — matching a clip's signal to its reference
+Match exposure, shake and grain to the reference. For a candidate that is
+semantically right and looks wrong in a way that is purely photometric or motion.
 
-For a candidate that is semantically right and looks wrong in a way that is purely
-photometric or motion: exposure that never wanders, highlights that never clip, a
-camera held too still, grain that does not match the reference's profile.
-
-Post moves numbers, and numbers were never the thing that made a clip read as
-generated — so nothing a viewer would describe in words belongs here. `judge.md`
-decides which of the three fixes a defect belongs to; if it sent you here, this is the
-file.
-
-Everything here is deterministic and free. It is the cheapest of the three fixes, so
-it is worth running on a clip that already ships.
+If a viewer can name the defect in words, this is the wrong file. Everything here
+is deterministic and free — worth running on a clip that already ships.
 
 ## Run it
 
@@ -123,7 +115,4 @@ better score afterwards is not evidence of anything. The check that matters is t
 nothing visible broke — a levels stretch can band, and a shake overlay can smear a
 region that was already soft.
 
-One side effect worth knowing about: every stage here re-encodes, and a raw delivery
-carries a signed provenance manifest that any re-encode drops. So the file coming out
-of `post.py` differs from the one going in in a way no metric reports and `ffprobe`
-does not show. `docs/evidence.md` says what the manifest is and how to check for it.
+Every stage re-encodes and drops the C2PA manifest (`docs/evidence.md`).

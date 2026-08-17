@@ -1,8 +1,5 @@
-# Prompt language — how a prompt is written
-
-Reference for the language a video prompt is written in: which register a constraint
-belongs to, what blocks a prompt has, how a timeline is written, and the rules that come
-from what these models do. What goes wrong on screen is in `pitfalls.md`.
+Registers, blocks, timeline, and the rules that come from what these models do.
+On-screen failures: `pitfalls.md`.
 
 ## Three registers
 

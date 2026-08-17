@@ -1,8 +1,4 @@
-# AGENT.md
-
-Where to look when working in this repo. Find the row that matches what was asked, read
-that file, and do what it says. Each file gives the full procedure for its own step;
-this one only points at them.
+Index. Open the matching file; it owns the step.
 
 ## Which prompt to follow
 
@@ -31,8 +27,7 @@ particular: every main character needs an image, and every prop worth pinning ne
 photograph, before a take can be bought. `face-gen.md` generates its image and is a paid
 call; `prop-ref.md` finds a photograph of a real object and is free.
 
-`generation.md` produces one clip per run. Generation is a numbers game, so expect to
-call it repeatedly for the same prompt.
+`generation.md` produces one clip per run. Call it repeatedly for the same prompt.
 
 `judge.md` closes the loop. It decides whether a clip ships, and if it does not, which
 of the other files the fix belongs in.
@@ -96,15 +91,16 @@ MB of decoded frames, so raise it only if there is memory to spare.
 Keeping references separate is what lets a run be thrown away and repeated without
 fetching anything again. Inside `output/<id>/`:
 
-    spec.json               the intent spec                        compile.md
-    prompt.v<n>.txt         each prompt revision                   compile.md
-    ref.<name>.png          one identity still or prop photo       face-gen.md / prop-ref.md
-    ref.<name>.source.txt   where a sourced photograph came from   prop-ref.md
-    seg.mp4                 the reference segment, if one was cut  generation.md
-    take.v<n>.t<k>.mp4      the takes                              generation.md
-    measure.json plan.md    the evidence                           judge.md
-    sweep/ sweep_ref/       the artifacts, candidate and control   judge.md
-    blind/                  the shuffled pair and its key          judge.md
-    report.md               the decision, and what went unresolved
+    spec.json                      the intent spec                   compile.md
+    prompt.v<n>.txt                each prompt revision              compile.md
+    ref.<name>.png                 one identity still or prop photo  face-gen.md / prop-ref.md
+    ref.<name>.source.txt          where a sourced photograph came from  prop-ref.md
+    seg.mp4                        the reference segment, if one was cut
+    take.v<n>.t<k>.mp4             the takes                         generation.md
+    take.v<n>.t<k>.selected.mp4    the delivered take                SKILL.md
+    measure.json plan.md           the evidence                      judge.md
+    sweep/ sweep_ref/              the artifacts, candidate and control  judge.md
+    blind/                         the shuffled pair and its key     judge.md
+    report.md                      the decision, and what went unresolved
 
 Both directories are gitignored: working state, not published output.

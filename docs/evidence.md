@@ -1,11 +1,6 @@
-# Evidence — what the artifacts and the metrics show
-
-Reference for reading what `vg sweep` and `vg vq` produce. It explains
-what each view covers and what each number means; it does not say what to run, in
-what order, or how to decide. That belongs to whoever is driving the check.
-
-Safe to hand to a blind inspector: nothing here says what the clip was supposed to
-contain.
+How to read `vg sweep` and `vg vq` output: what each view covers and what each
+number means. Safe for a blind inspector — nothing here says what the clip was
+supposed to contain.
 
     vg sweep strips CLIP DIR      temporal coverage
     vg sweep tiles  CLIP DIR      spatial coverage
