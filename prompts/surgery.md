@@ -13,8 +13,7 @@ which of the three fixes a defect belongs to — if it sent you here, this is th
 Not primarily cost. With no exposed seed (`docs/pitfalls.md`), a full regeneration
 re-rolls every element of the shot — the framing that was right, the performance that
 was right, the set dressing that was right. A patch keeps what already works and
-re-rolls only the span that does not. Check whether the endpoint you are using still
-lacks a seed; if one appears, this argument weakens considerably.
+re-rolls only the span that does not.
 
 Cost is secondary and the comparison is close. A patch costs a fixed amount set by
 the minimum duration, whatever the clip's length, while a full regeneration scales
@@ -73,7 +72,7 @@ change:
 > The prop stays in the same hands, the same size and the same route throughout. No
 > cut, no reframe, no change of shot size.
 
-Negatives go inline: there is no `negative_prompt` on any Seedance endpoint.
+Negatives go inline, for the reason `compile.md` §5 gives.
 
 ## 4. Generate
 
@@ -109,9 +108,9 @@ Budget several attempts.
     python tools/vq.py measure out.mp4 patch.mp4
 
 Read it as a match test, not a quality test: the patch should sit close to its parent
-clip on exposure and grain profile. `noise_luma_slope` is the useful one — it is a
-capture-pipeline fingerprint and barely moves with bitrate, so a patch that disagrees
-with the parent on slope will read as a different camera when spliced.
+clip on exposure and grain profile. `noise_luma_slope` is the useful one
+(`docs/evidence.md`) — a patch that disagrees with the parent on slope will read as a
+different camera when spliced.
 
 Then look at the first and last frames of the patch against the anchors at 4x. If the
 model interpolated rather than continued — a smooth morph between the two anchors

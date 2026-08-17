@@ -46,13 +46,8 @@ you are actually making:
 ### An image for every main character, always
 
 Any character the shot is about needs an identity image, generated with `face-gen.md`,
-before the call is made. Not a description in the prompt — a file.
-
-Text-only identity fails two ways at once:
-
-- Identity **drifts** across the take, so the person at 0.5s is not the person at 4s.
-- The **beauty prior** wins (`T14`). An ordinary fifty-year-old comes back as an
-  attractive thirty-two-year-old, every time.
+before the call is made. Not a description in the prompt — a file. `face-gen.md` says
+why text-only identity does not work and how to fight what it loses to (`T14`).
 
 One file per character, reused **unchanged** by every run of this file and by every
 other shot the character appears in. Regenerating "the same" character produces a
@@ -133,9 +128,9 @@ Settings this format wants:
 - **9:16**, and 720p unless there is a reason. The delivery this is aimed at sits near
   0.036 bits/pixel after the platform re-encode (`docs/pitfalls.md`); resolution beyond
   720p buys detail that the delivery destroys, at a higher price.
-- **Longer than the finished clip.** Quality falls off at the tail — roughly 85% clean
-  at 5s against 55% at 10s (`T8`) — so ask for a couple of seconds of overhead and cut
-  the end off. It is cheaper than re-rolling a good take that died in its last second.
+- **Longer than the finished clip.** Quality falls off at the tail (`T8`), so ask for a
+  couple of seconds of overhead and cut the end off. It is cheaper than re-rolling a
+  good take that died in its last second.
 - **Audio on.** It is generated with the picture and locked there: dubbing over a
   visible mouth fails, so a take with the wrong words is a dead take, not a fixable one.
   (`surgery.md` turns audio off, because a patch inherits the parent clip's audio.)

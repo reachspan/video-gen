@@ -7,18 +7,16 @@ A metric that has never been tested against a known input is a hypothesis.
 Each case perturbs one property and asserts the responsible metrics move in the
 expected direction.
 
-This proves a metric measures what it claims. It does not prove the metric
-separates generated footage from real footage — none of them does, so a passing
-metric is a usable pointer, not a detector. See docs/evidence.md.
+This proves a metric measures what it claims, which is not the same as proving it
+detects anything — see docs/evidence.md.
 
 A metric with no case is UNCOVERED and is reported as a failure: silence about a
 metric is not evidence for it.
 """
-import subprocess, sys, tempfile, os
-from multiprocessing import Pool
+import shutil, sys, tempfile, os
 import cv2
 import numpy as np
-from vid import read, write, probe
+from vid import read, write, probe, pmap
 import vq
 
 TMP = tempfile.mkdtemp(prefix="selftest-")
@@ -64,9 +62,8 @@ def morph(F, amp=40.0):
     remove it, so it decorrelates EVERY background tile — the global-degradation
     case, as opposed to occlude()'s single localized one.
 
-    Amplitude comes from the metric's measured sensitivity: permanence_mean_ncc
-    moves 5.1% at 20px, 14.6% at 40px and 29.4% at 80px. The mean only registers
-    gross degradation, with a floor around 20px; below that read the worst tile.
+    permanence_mean_ncc only registers gross degradation, with a floor around
+    20px of warp, so the amplitude is set well clear of it.
     """
     h, w = F.shape[1:3]
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
@@ -157,15 +154,9 @@ def main(clip):
     print(f"{'injected':<18}{'metric':<24}{'base':>10}{'after':>10}{'want':>6}  result")
 
     # Encoding is cheap and measuring is not, and the cases are independent, so
-    # encode serially and measure in parallel. Results are identical either way.
+    # encode serially and measure in parallel.
     paths = [emit(fn(F), fps, name.replace(" ", "_")) for name, fn, _ in CASES]
-    jobs = int(os.environ.get("VQ_JOBS", 0)) or min(4, os.cpu_count() or 1)
-    if jobs > 1:
-        with Pool(min(len(paths), jobs)) as pool:
-            done = pool.map(vq.measure, paths)
-    else:
-        done = [vq.measure(p) for p in paths]
-    measured = {name: m for (name, _, _), m in zip(CASES, done)}
+    measured = {name: m for (name, _, _), m in zip(CASES, pmap(vq.measure, paths))}
 
     covered, fails = set(), 0
     for name, fn, asserts in CASES:
@@ -207,7 +198,7 @@ def main(clip):
     for k in uncovered:
         print(f"{'-':<18}{k:<24}{'-':>10}{'-':>10}{'-':>6}  UNCOVERED")
 
-    subprocess.run(["rm", "-rf", TMP])
+    shutil.rmtree(TMP, ignore_errors=True)
     n = sum(len(a) for _, _, a in CASES) + 1   # + the localization check
     print(f"\n{n - fails}/{n} assertions pass; {len(uncovered)} metric(s) uncovered")
     return 1 if (fails or uncovered) else 0

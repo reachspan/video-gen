@@ -9,8 +9,6 @@ The spec exists so that a change — swapping the character, moving the setting,
 altering a prop — can be made without silently destroying the thing that made the
 original work. The prompt is disposable; the spec is not.
 
-`targets/` is gitignored. These are working files, not published output.
-
 ## 1. Say what happens
 
 Before measuring anything, watch the clip and write down in plain language:
@@ -33,9 +31,9 @@ This comes first because the two instruments fail differently and each is the ch
 the other. Reading a plot, a genre, a role or an affect is coarse and robust. Counting
 hands, resolving a join, deciding where one object ends and the next begins is precise
 and fragile — adjacent things merge into one, a single thing reads as two, and the
-mistake looks exactly like an observation. Establish the plot first so the measurements have something
-to be tested against; measure afterwards so the plot has something to be corrected by.
-Neither settles the spec on its own.
+mistake looks exactly like an observation. So establish the plot first, to give the
+measurements something to be tested against, and measure afterwards, to give the plot
+something to be corrected by.
 
 ## 2. Inventory and reconstruct
 
@@ -57,7 +55,7 @@ frame are easy to overlook and are often doing the work.
 Every later step is cheap to redo; this one is not. A misread here clears the gate,
 generates faithfully, and comes back confirmed by every downstream reader — all of them
 check your sentence, not the clip — so it survives a whole production run and costs
-every generation in it. Take as long as it takes. Three rules follow.
+every generation in it. Take as long as it takes.
 
 **Sample every frame, not a few.** For each load-bearing subject, cut its region out of
 the whole clip as contact sheets and read them in order, raising `fps` until nothing
@@ -140,8 +138,8 @@ help.
 samples. It survives magnification, it recurs at every timestamp, and separate readers
 reproduce it because they share the failure mode rather than because it is true. So a
 second look agreeing with the first confirms very little, and two agents agreeing with
-each other confirms little more — they are not independent when they fail the same way.
-Repetition launders nothing, and confidence grows with it regardless.
+each other confirms little more — they are not independent when they fail the same way,
+and confidence grows with repetition regardless.
 
 **An observation that contradicts physics or plain sense should be de-weighted, not
 re-checked.** If the literal reading requires a person to have one arm, an object to
@@ -215,8 +213,7 @@ Also record:
 
 `gate.py` hard-requires `elements[]`, `forbidden_assertions`, `performance`
 and `composition`. Everything else is for the human reader and for whoever revises
-this later. `targets/` is gitignored, so there is no example in the repo to copy —
-this is the shape:
+this later. There is no example in the repo to copy — this is the shape:
 
 ```json
 {
@@ -439,11 +436,11 @@ into instruction.
 
 ### Swapping the character
 
-Generate the new identity with `face-gen.md` — every synthetic character gets an image,
-and text-only identity is not an option. The prompt's `REFERENCES` block then has to
-split what each reference supplies from what it must not: take the person from the face
-image, take only the camera and the room from the reference clip. Without that second
-half the original performer leaks back in.
+Generate the new identity with `face-gen.md` — every main character gets an image, and
+text-only identity is not an option. The prompt's `REFERENCES` block then has to split
+what each reference supplies from what it must not: take the person from the face
+image, and if the reference clip is attached at all, take only the camera and the room
+from it. Without that second half the original performer leaks back in.
 
 `generation.md` owns which references get attached and what the block has to say about
 each of them; write the block from there. It is also where the rule lives that a prop

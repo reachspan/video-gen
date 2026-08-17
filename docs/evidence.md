@@ -73,8 +73,7 @@ cameras. **A generated clip lands inside the real range on every one of them.** 
 footage varies more between cameras, scenes, operators and bitrates than generated
 footage differs from real.
 
-So a metric that fires is a place to look, and a metric that stays quiet is not a
-pass. A clip is not real because it scored well.
+So a metric that fires is a place to look, and a metric that stays quiet is not a pass.
 
 Grain **magnitude** is deliberately not measured. It tracks the encoder rather than
 the content — the same clip transcoded from 6993 to 651 kbps loses a quarter of it,

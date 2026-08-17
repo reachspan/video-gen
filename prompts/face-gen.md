@@ -105,5 +105,5 @@ image is enough below that.
 
 The output of this is one PNG and the prompt that produced it. Both belong beside the
 target spec, so the character can be reproduced or revised later. `compile.md` writes
-the character into the video prompt; `generation.md` attaches this exact file, and
-attaches one for every synthetic character in the shot rather than only the principal.
+the character into the video prompt; `generation.md` attaches this exact file. Every
+main character needs one; minor figures are worth one if there is budget.

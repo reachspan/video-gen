@@ -1,41 +1,17 @@
 #!/usr/bin/env python3
-"""Systematic inspection sweep.
+"""Systematic inspection sweep: a clip turned into a bounded set of views.
 
   sweep.py strips CLIP OUTDIR      slit-scans: the whole duration in one image each
   sweep.py tiles CLIP OUTDIR       4x crops tiling the frame, at sampled frames
   sweep.py plan CLIP [REF]         per-pitfall checklist, as markdown
 
-An inspection that jumps to whatever looks suspicious will keep missing the same
-things. These commands turn a clip into a bounded set of views that between them
-cover every frame and every region, so a red-team pass can be exhaustive and can
-say what it has actually looked at.
-
-Two coverage axes, handled differently:
-
-TIME. A slit-scan takes one row or column of pixels from every frame and stacks
-them side by side, so a whole clip becomes a single image. Nothing is sampled
-away: every frame contributes. Motion becomes shape - a subject that breathes
-gives a wavering edge, one that freezes gives a dead straight line, and a jump cut
-gives a vertical discontinuity.
-
-SPACE. Small defects - text, logos, fingers, contact shadows - are invisible in a
-downscaled full frame, so the frame is cut into tiles and each is written at 4x.
-Every pixel lands in exactly one tile, and the tile grid matches the one vq.py
-scores, so a permanence hotspot names the tile to open.
-
-Tiles are written for a few frames spread across the clip AND for each tile's own
-worst moment, found by scanning every frame. A brief defect between the sampled
-frames would otherwise be missed entirely; this keeps the number of images fixed
-while the search behind them covers the whole clip.
-
-What can still slip through: a defect that is small, brief, and not the most
-anomalous moment in its own tile. Nothing here makes the sweep infallible - it
-makes it bounded, repeatable, and honest about where it looked.
+`docs/evidence.md` explains what each view covers, what can still slip past it,
+and how to read one.
 """
-import json, os, sys
+import os, sys
 import cv2
 import numpy as np
-from vid import read, count, spread, blocks, read_at, probe
+from vid import read, count, spread, probe
 
 ROWS, COLS = 6, 4          # matches the vq.py permanence grid
 ZOOM = 4
@@ -77,14 +53,8 @@ def _crop(im, i, j, out):
     return out
 
 
-def odd_frames(path, k=3):
+def odd_frames(F, k=3):
     """For each tile, the frame where it departs most from its own neighbours.
-
-    Sampling a few frames leaves a defect that appears briefly - a wordmark that
-    garbles for half a second, a grip that breaks and recovers - free to fall
-    between them. Every frame is scanned here, cheaply and at reduced scale, and
-    each tile reports its own worst moment, so the number of images to look at
-    stays fixed while the search covers the whole clip.
 
     The score is a second difference in time, |2*f(t) - f(t-k) - f(t+k)|. Steady
     drift and steady motion cancel; what survives is the moment a region stops
@@ -92,7 +62,6 @@ def odd_frames(path, k=3):
     each frame against a whole-clip average instead just rediscovers the ends of
     the clip on anything that drifts.
     """
-    F = read(path)
     small = np.stack([cv2.cvtColor(cv2.resize(f, (F.shape[2] // 4, F.shape[1] // 4)),
                                    cv2.COLOR_RGB2GRAY) for f in F]).astype(np.float32)
     n, h, w = small.shape
@@ -112,19 +81,18 @@ def tiles(path, outdir, nframes=3):
     """Every region of the frame at 4x: on frames spread across the clip, plus
     each tile at its own most anomalous frame."""
     os.makedirs(outdir, exist_ok=True)
-    n = count(path)
-    idx = spread(n, nframes)
-    odd = odd_frames(path)
-    got = read_at(path, sorted(set(idx) | set(odd.values())))
+    F = read(path)                      # odd_frames scans every frame anyway
+    idx = spread(len(F), nframes)
+    odd = odd_frames(F)
     made = []
     for f in idx:
         for i in range(ROWS):
             for j in range(COLS):
-                made.append(_crop(got[f], i, j,
+                made.append(_crop(F[f], i, j,
                                   os.path.join(outdir, f"f{f:04d}_t{i}{j}.jpg")))
     for (i, j), f in sorted(odd.items()):
         if f not in idx:
-            made.append(_crop(got[f], i, j,
+            made.append(_crop(F[f], i, j,
                               os.path.join(outdir, f"odd_t{i}{j}_f{f:04d}.jpg")))
     return made
 

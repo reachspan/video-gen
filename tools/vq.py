@@ -5,42 +5,27 @@
 
 JSON on stdout, comparison table on stderr.
 
-These measure DISTANCE FROM A REFERENCE, not realism. Measured against real phone
-video from six cameras, a generated clip sits inside the real range on every metric
-here, so none of them can decide whether footage is real. What they do is
-say where and when a candidate departs from its reference, which is where to look.
-Read a value only against a reference measured in the same run; a quiet metric is
-not a pass. See docs/evidence.md.
+These measure DISTANCE FROM A REFERENCE, not realism. Read a value only against a
+reference measured in the same run. `docs/evidence.md` says what each number
+means, which ones survive which conditions, and why a quiet metric is not a pass.
 
-noise_luma_slope is worth knowing about: it is near-constant per camera, so it
-tests whether two clips share a capture pipeline rather than whether either is
-real.
-
-Grain MAGNITUDE is not measured here. It tracks the encoder rather than the
-content - the same clip transcoded from 6993 to 651 kbps loses a quarter of it -
-so it says nothing about generation quality. noise_by_luma carries the same
-dependence and is context for the slope, not a number to compare across bitrates;
-the slope itself is normalised and shifts only ~10% over that range.
-
-Measures nothing at platform bitrates, do not re-add: lateral chromatic
-aberration, grain advection, raw temporal residual correlation, vignetting.
-
-Real footage disagrees with itself on these as much as it disagrees with generated
-output, do not re-add: sharpness radial falloff and centre/corner ratio, shake
-spectral slope and peakiness, radial FFT slope, noise band max/min ratio.
+Removed after measurement, do not re-add: lateral chromatic aberration, grain
+advection, raw temporal residual correlation and vignetting, none of which
+survive platform bitrates; sharpness radial falloff, centre/corner ratio, shake
+spectral slope and peakiness, radial FFT slope and noise band max/min ratio, on
+all of which real footage disagrees with itself as much as with generated output.
 """
-import json, os, sys
-from multiprocessing import Pool
+import json, sys
 import cv2
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
-from vid import probe, luma, luma_profile, count, spread, blocks, read_at
+from vid import (probe, luma, luma_profile, count, spread, blocks, read_at,
+                 pairs, to_gray, pmap, CENTRES, BLOCKLEN)
 
 # Photometric stats and the subject mask share NSAMPLE frames spread across the
-# whole clip. Adjacent-frame metrics cannot use a spread, so they read NBLOCK
-# contiguous runs of BLOCKLEN, one of them anchored at the tail.
+# whole clip. Adjacent-frame metrics cannot use a spread, so they read the
+# contiguous blocks vid.blocks() lays out.
 NSAMPLE = 24
-NBLOCK, BLOCKLEN = 3, 16
 # Permanence needs a bounded horizon. Compared against the first frame of a whole
 # 4s clip the worst tile saturates on real footage, because over four seconds
 # something always moves; ~0.8s is long enough for drift to show and short enough
@@ -82,7 +67,7 @@ def measure(path):
 
     n = count(path)
     sidx = spread(n, NSAMPLE)
-    bidx = blocks(n, NBLOCK, BLOCKLEN)
+    bidx = blocks(n)
     pidx = blocks(n, PBLOCK, PBLOCKLEN)
     frames = read_at(path, sidx + [i for b in bidx + pidx for i in b])
     m["sampled"] = {"frames": n, "spread": [sidx[0], sidx[-1]],
@@ -98,11 +83,10 @@ def measure(path):
     # mean noise so it does not move with overall grain magnitude. Unlike the
     # max/min ratio this keeps the ORDER of the bands, which is the part that
     # differs between cameras.
-    c = np.array([32, 96, 160, 224], float)
     ok = np.array([x is not None and x > 0 for x in prof])
     if ok.sum() > 1:
         pv = np.array([x for x, k in zip(prof, ok) if k], float)
-        s = float(np.polyfit(c[ok], pv, 1)[0]) * 100 / (pv.mean() + 1e-9)
+        s = float(np.polyfit(CENTRES[ok], pv, 1)[0]) * 100 / (pv.mean() + 1e-9)
         m["noise_luma_slope"] = round(s, 3)
     else:
         m["noise_luma_slope"] = None
@@ -113,8 +97,7 @@ def measure(path):
     m["clip_high_pct"] = round(float(h[254:].sum() / t * 100), 3)
     m["clip_low_pct"] = round(float(h[:2].sum() / t * 100), 3)
 
-    gray = {i: cv2.cvtColor(f, cv2.COLOR_RGB2GRAY).astype(np.float32)
-            for i, f in frames.items()}
+    G = {i: to_gray(f) for i, f in frames.items()}
     # Colour is only needed for the photometric sample and for permanence chroma;
     # the motion blocks work on gray alone. Holding every decoded frame in colour
     # costs hundreds of MB per clip, which matters once clips run in parallel.
@@ -128,7 +111,7 @@ def measure(path):
     h_, w_ = F.shape[1:3]
     subj = np.zeros((h_, w_), bool)
     subj[int(h_ * .15):int(h_ * .95), int(w_ * .20):int(w_ * .80)] = True
-    box = subject_box(np.stack([gray[i] for i in sidx]))
+    box = subject_box(np.stack([G[i] for i in sidx]))
     if box:
         x, y, bw, _ = box
         subj[y:, x:x + bw] = True
@@ -140,27 +123,26 @@ def measure(path):
     # adjacent frames and pooled across blocks that span the clip.
     disp, energy, ssims, live, ratio = [], [], [], [], []
     bgr_n = int((~subj).sum())
-    for b in bidx:
-        for u, v in zip(b, b[1:]):
-            A, B = gray[u], gray[v]
-            (dx, dy), _ = cv2.phaseCorrelate(A, B)
-            disp.append(float(np.hypot(dx, dy)))
-            energy.append(float(np.abs(B - A).mean()))
-            ssims.append(float(ssim(A, B, data_range=255)))
-            # Liveliness: motion left INSIDE the subject after the camera's own
-            # movement is cancelled. Normalised by the subject's contrast so it
-            # does not track exposure or scene brightness.
-            Bc = cv2.warpAffine(B, np.float32([[1, 0, -dx], [0, 1, -dy]]),
-                                (w_, h_), borderMode=cv2.BORDER_REPLICATE)
-            d = np.abs(Bc - A)
-            live.append(float(d[subj].mean() / (A[subj].std() + 1e-6)))
-            # Global compensation never removes all camera movement - parallax and
-            # rolling shutter leak through, and they leak into background and
-            # subject alike. Their RATIO cancels that, leaving how much more the
-            # subject moves than its own backdrop, which is what a still body
-            # loses. Skipped when there is no background left to compare against.
-            if bgr_n:
-                ratio.append(float(d[subj].mean() / (d[~subj].mean() + 1e-6)))
+    for u, v in pairs(bidx):
+        A, B = G[u], G[v]
+        (dx, dy), _ = cv2.phaseCorrelate(A, B)
+        disp.append(float(np.hypot(dx, dy)))
+        energy.append(float(np.abs(B - A).mean()))
+        ssims.append(float(ssim(A, B, data_range=255)))
+        # Liveliness: motion left INSIDE the subject after the camera's own
+        # movement is cancelled. Normalised by the subject's contrast so it
+        # does not track exposure or scene brightness.
+        Bc = cv2.warpAffine(B, np.float32([[1, 0, -dx], [0, 1, -dy]]),
+                            (w_, h_), borderMode=cv2.BORDER_REPLICATE)
+        d = np.abs(Bc - A)
+        live.append(float(d[subj].mean() / (A[subj].std() + 1e-6)))
+        # Global compensation never removes all camera movement - parallax and
+        # rolling shutter leak through, and they leak into background and
+        # subject alike. Their RATIO cancels that, leaving how much more the
+        # subject moves than its own backdrop, which is what a still body
+        # loses. Skipped when there is no background left to compare against.
+        if bgr_n:
+            ratio.append(float(d[subj].mean() / (d[~subj].mean() + 1e-6)))
     m["displacement_px"] = round(float(np.median(disp)), 3)
     e = np.array(energy)
     m["motion_mean"] = round(float(e.mean()), 3)
@@ -197,19 +179,19 @@ def measure(path):
     # because a fixed pixel count would reject real motion on a clip that pans.
     steps = {}
     for blk in pidx:
-        prev, acc = gray[blk[0]], []
+        prev, acc = G[blk[0]], []
         for t_ in blk[1:]:
-            acc.append(cv2.phaseCorrelate(prev, gray[t_])[0])
-            prev = gray[t_]
+            acc.append(cv2.phaseCorrelate(prev, G[t_])[0])
+            prev = G[t_]
         steps[blk[0]] = acc
     allmag = [float(np.hypot(*s)) for a in steps.values() for s in a]
     maxstep = 8.0 * float(np.median(allmag)) + 2.0
     m["align_maxstep_px"] = round(maxstep, 2)
 
-    ref_std = float(np.mean([gray[b[0]].std() for b in pidx]))
+    ref_std = float(np.mean([G[b[0]].std() for b in pidx]))
     cells, clamped = [], 0
     for blk in pidx:
-        g0, c0 = gray[blk[0]], frames[blk[0]]
+        g0, c0 = G[blk[0]], frames[blk[0]]
         LAB0 = cv2.cvtColor(c0, cv2.COLOR_RGB2LAB).astype(np.float32)
         dx = dy = 0.0
         for t_, (sx, sy) in zip(blk[1:], steps[blk[0]]):
@@ -218,7 +200,7 @@ def measure(path):
                 clamped += 1
             dx, dy = dx + sx, dy + sy
             M = np.float32([[1, 0, dx], [0, 1, dy]])
-            al = cv2.warpAffine(gray[t_], M, (w_, h_),
+            al = cv2.warpAffine(G[t_], M, (w_, h_),
                                 borderMode=cv2.BORDER_REPLICATE)
             lab = cv2.cvtColor(
                 cv2.warpAffine(frames[t_], M, (w_, h_),
@@ -290,40 +272,30 @@ KEYS = ["fps", "kbps", "noise_luma_slope", "clip_high_pct",
 if __name__ == "__main__":
     if len(sys.argv) < 3 or sys.argv[1] != "measure":
         sys.exit(__doc__)
-    else:
-        paths = sys.argv[2:]
-        # Clips are independent, so measure them in parallel. Each result is
-        # identical to the serial one; only the wall clock changes. Each worker
-        # holds a few hundred MB of decoded frames, so the cap is set by memory
-        # rather than by core count. VQ_JOBS overrides it.
-        jobs = int(os.environ.get("VQ_JOBS", 0)) or min(4, os.cpu_count() or 1)
-        if len(paths) > 1 and jobs > 1:
-            with Pool(min(len(paths), jobs)) as pool:
-                rs = pool.map(measure, paths)
-        else:
-            rs = [measure(p) for p in paths]
-        print(json.dumps(rs, indent=1))
-        if len(rs) > 1:
-            w = 14
-            print("\n%-28s%s" % ("metric", "".join(f"{r['file'][:13]:>{w}}" for r in rs)),
-                  file=sys.stderr)
-            for k in KEYS:
-                base, line = rs[0].get(k), "%-28s" % k
-                for r in rs:
-                    val, flag = r.get(k), ""
-                    if r is not rs[0] and isinstance(val, (int, float)) \
-                            and isinstance(base, (int, float)):
-                        den = abs(base) if abs(base) > 1e-9 else 1.0
-                        flag = " !" if abs(val - base) / den > 0.35 else ""
-                    line += f"{str(val) + flag:>{w}}"
-                print(line, file=sys.stderr)
-            # Grain survives in proportion to the bits spent on it, so per-band
-            # noise levels are not comparable across a large bitrate gap.
-            base_kbps = rs[0].get("kbps") or 0
-            odd = [r["file"] for r in rs[1:]
-                   if base_kbps and r.get("kbps")
-                   and not 0.5 <= r["kbps"] / base_kbps <= 2.0]
-            if odd:
-                print(f"\nnote: bitrate differs from the reference by more than 2x "
-                      f"({', '.join(odd)}).\n      noise_by_luma is not comparable "
-                      f"across that gap; noise_luma_slope is.", file=sys.stderr)
+    paths = sys.argv[2:]
+    rs = pmap(measure, paths)
+    print(json.dumps(rs, indent=1))
+    if len(rs) > 1:
+        w = 14
+        print("\n%-28s%s" % ("metric", "".join(f"{r['file'][:13]:>{w}}" for r in rs)),
+              file=sys.stderr)
+        for k in KEYS:
+            base, line = rs[0].get(k), "%-28s" % k
+            for r in rs:
+                val, flag = r.get(k), ""
+                if r is not rs[0] and isinstance(val, (int, float)) \
+                        and isinstance(base, (int, float)):
+                    den = abs(base) if abs(base) > 1e-9 else 1.0
+                    flag = " !" if abs(val - base) / den > 0.35 else ""
+                line += f"{str(val) + flag:>{w}}"
+            print(line, file=sys.stderr)
+        # Grain survives in proportion to the bits spent on it, so per-band
+        # noise levels are not comparable across a large bitrate gap.
+        base_kbps = rs[0].get("kbps") or 0
+        odd = [r["file"] for r in rs[1:]
+               if base_kbps and r.get("kbps")
+               and not 0.5 <= r["kbps"] / base_kbps <= 2.0]
+        if odd:
+            print(f"\nnote: bitrate differs from the reference by more than 2x "
+                  f"({', '.join(odd)}).\n      noise_by_luma is not comparable "
+                  f"across that gap; noise_luma_slope is.", file=sys.stderr)

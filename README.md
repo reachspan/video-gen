@@ -3,7 +3,7 @@
 Take a short video you like, recreate it with AI generation — with a different person
 in it, or a different setting — and check honestly whether the result holds up.
 
-Built for 9:16 phone-shot social video: a few seconds, one speaker, handheld.
+Built for 9:16 phone-shot social video: short-form, one speaker, handheld.
 
 ## What you get
 
@@ -37,11 +37,12 @@ page load and prepend it to `DOC_IDS`.
 1. **Compile** the reference into a spec and a prompt.
 2. **Check the prompt** against the spec before spending anything — free, and it
    catches the mistakes that would otherwise cost a whole generation.
-3. **Generate** a take. The original clip goes in as a video reference every time, for
-   the camera and the room; every character who is not in that clip gets a generated
-   face image first, because identity written as text drifts and comes back
-   better-looking than it should; a prop that text keeps getting wrong gets a reference
-   image too, which is far cheaper than another video attempt.
+3. **Generate** a take. Every main character gets a generated face image first, because
+   identity written as text drifts and comes back better-looking than it should; a prop
+   that text keeps getting wrong gets a reference image too, which is far cheaper than
+   another video attempt. The original clip can go in as a video reference as well — it
+   supplies the camera and the room, and costs you the cast, so it is a trade rather
+   than a step.
 4. **Judge** the result, meaning first: agents who have not been told what the shot
    was supposed to be watch it blind alongside the original and say what they think
    it is. Only a clip that still means something gets the frame-by-frame sweep, where
@@ -54,8 +55,8 @@ Ask for any step by name, or for the whole thing.
 
 ## What to expect
 
-Generation is a numbers game: professional work discards on the order of sixty
-attempts per keeper, so budget for rejects rather than for one clean run. Clips
+Generation is a numbers game: the reject ratio on professional work is around 64:1
+(`docs/pitfalls.md`), so budget for rejects rather than for one clean run. Clips
 degrade toward the end, so it is normal to generate longer than needed and trim.
 
 No measurement here can tell you whether a clip is real or generated — real footage
@@ -67,7 +68,7 @@ premise down to a garbled logo.
 ## Setup
 
     uv venv --python 3.13 .venv
-    uv pip install --python .venv/bin/python opencv-python-headless scikit-image numpy scipy av pillow
+    uv pip install --python .venv/bin/python opencv-python-headless scikit-image numpy scipy av
 
 Generation runs through the [Higgsfield](https://higgsfield.ai) CLI, which needs its
 own account and credits. `ffmpeg` must be on the path.
