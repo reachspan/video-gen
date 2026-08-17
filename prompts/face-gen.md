@@ -1,28 +1,17 @@
-# face-gen — building a character reference image
+Produce a still of a face that reads as a real person. One image, reused unchanged
+for every shot of that character.
 
-Produce a still of a face that reads as a real person, to be passed into video
-generation as the identity reference. One image, reused unchanged for every shot of
-that character.
+Text identity drifts, and beauty bias is worst there: an ordinary fifty-year-old
+comes back as an attractive thirty-two, because the prior for "man" is a good-looking
+man. An image pins the identity and shortens the video prompt, leaving room for
+premise, blocking, performance.
 
-## Why a reference image at all
+## Model
 
-Describing a face in the video prompt does not work. Identity drifts across the take,
-and text-only identity is where **beauty bias** bites hardest: an ordinary
-fifty-year-old comes back as an attractive thirty-two-year-old, every time, because
-the model's prior for "man" is a good-looking man.
+`nano_banana_pro` unless you have a reason. `nano_banana_2_lite` if the run is tight,
+at some cost in fidelity.
 
-Pinning identity to an image fixes the drift and shortens the video prompt, which
-leaves room for the things only text can carry — premise, blocking, performance.
-
-## Picking a model
-
-**Nano Banana Pro (`nano_banana_pro`), unless there is a reason to change it.** It is the
-top tier of the family the lineup points at for character and reference-driven image
-work, which is this job rather than text or graphic design. `nano_banana_2_lite` is the
-cheaper fallback when a run is tight, at some cost in fidelity on a hard brief.
-
-The lineup turns over, so confirm it is still there and read what it takes rather than
-trusting this page:
+Confirm it still exists:
 
     higgsfield model list --image
     higgsfield model get nano_banana_pro
@@ -80,8 +69,7 @@ supplies identity, so it should be plain:
 
 ## Inspect before using
 
-Open every candidate as a tight crop upscaled 4x — a full frame arrives downsampled
-and you will both miss real faults and invent ones that are not there.
+Open every candidate as a tight crop upscaled 4x (`docs/evidence.md`).
 
     ffmpeg -i face.png -vf "crop=400:400:X:Y,scale=1600:1600:flags=lanczos" crop.jpg
 

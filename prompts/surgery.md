@@ -1,24 +1,15 @@
-# Surgery — repairing a localized defect
-
 Regenerate a bad span of an otherwise good clip, pinned at both ends by real frames
-so it splices back in. For a defect that occupies part of the runtime and leaves the
-rest usable.
+so it splices back in. For something *wrong in a place*: an object that morphs, a
+prop that re-routes, a hand that breaks and recovers, a tail that collapses.
 
-Surgery is for something *wrong in a place*: an object that morphs, a prop that
-re-routes, a hand that breaks and recovers, a tail that collapses. `judge.md` decides
-which of the three fixes a defect belongs to — if it sent you here, this is the file.
+## Why patch
 
-## Why patch instead of regenerating
+With no exposed seed (`docs/pitfalls.md`), a full regeneration re-rolls the framing,
+performance and set dressing that were already right. A patch keeps those and
+re-rolls only the span that is not.
 
-Not primarily cost. With no exposed seed (`docs/pitfalls.md`), a full regeneration
-re-rolls every element of the shot — the framing that was right, the performance that
-was right, the set dressing that was right. A patch keeps what already works and
-re-rolls only the span that does not.
-
-Cost is secondary and the comparison is close. A patch costs a fixed amount set by
-the minimum duration, whatever the clip's length, while a full regeneration scales
-with it — so patching wins on longer clips and loses on short ones. Price both before
-deciding rather than assuming:
+A patch costs a fixed minimum duration; a full regen scales with clip length.
+Patching wins on longer clips and loses on short ones. Price both:
 
     higgsfield generate cost <model> --prompt "x" --duration <n> --resolution 720p
 
@@ -72,9 +63,7 @@ change:
 > The prop stays in the same hands, the same size and the same route throughout. No
 > cut, no reframe, no change of shot size.
 
-Negatives go inline, for the reason `docs/prompt-language.md` gives. That file also gives
-the register to write the patch in: a patch describes a defect, and a defect is described
-by its appearance, which is a pose. Write the relation instead.
+Negatives inline. Write the patch in the register `docs/prompt-language.md` names.
 
 ## 4. Generate
 

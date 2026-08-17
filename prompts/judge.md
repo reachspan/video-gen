@@ -1,51 +1,27 @@
-# Judge — deciding whether a clip ships
+This file decides whether a take ships.
 
-**Start here to evaluate a generated clip.** This file owns the procedure end to end:
-what to run, in what order, who runs it, what they are allowed to see, and how the
-answers become one decision. Nothing else in the repo decides anything.
+Run the candidate and the reference through the same steps and read the difference.
+Blind readers watch both, shuffled. The sweep builds both clips' artifacts.
 
-Everything below runs on a clip that already exists, against the reference it
-recreates. What it reads, and what each of those does NOT do:
+Measurements (`vg vq`, sweep artifacts) are auxiliary diagnostics: they show where
+the candidate departs from the reference. They are not sufficient discriminators —
+a generated clip can land inside the real range on every metric (`docs/evidence.md`).
+The bar is what the reference already scores, not perfection.
 
-| file | job | does NOT |
-|---|---|---|
-| `docs/pitfalls.md` | catalogue of what goes wrong: the `S` ids and the `T` ids | say how to check any of it |
-| `docs/evidence.md` | how to read the artifacts and the metrics | list pitfalls, or decide |
-| `vg sweep plan` | the per-pitfall procedure for *this* clip, and the work packages | judge what it finds |
-| `vg vq measure` | distance from the reference | decide anything |
-
-## Nothing here is judged in absolute terms
-
-Every step runs the **candidate and the reference through the identical procedure** and
-reads the difference. Blind readers watch both, shuffled. The sweep builds the
-reference's artifacts alongside the candidate's. The metrics are only defined as a
-comparison in the first place.
-
-That is not diligence for its own sake, and it is not optional. No tool here separates
-generated footage from real (`docs/evidence.md`), and a reader asked whether a clip is
-generated will say yes about real footage often enough that the answer alone means
-little. Both failure modes are caught by having the reference in the batch, and neither
-is caught by a threshold.
-
-So the bar is what the footage being recreated already scores. A candidate is not
-being asked to be perfect.
-
-## The sequence
+`pitfalls.md` names the tells. `vg sweep plan` is the per-clip procedure.
 
     1  meaning     does it still mean what the reference meant?    blind   → fail: stop here
     2  notice      does a fresh viewer clock it as generated?     blind   → spawned with 1, read at 4
     3  defects     what is wrong, and exactly where?              4x, whole-clip coverage
     4  decision    ship or not; if not, which fix
 
-**Meaning first, and it is a hard gate.** A clip that has lost its premise gets fixed
-by revising the spec and regenerating whole — which discards every artifact step 3
-would have built. Semantic failure is also the one class no measurement here can see,
-so it has to be caught by a viewer rather than measured.
+**Meaning first, and it is a hard gate.** A lost premise is fixed by revising the spec
+and regenerating whole — which discards every step 3 artifact. No measurement here can
+see it, so a viewer has to.
 
-**No two steps ask the same question.** Every located defect belongs to step 3, which
-reads tiles at 4x with a stated coverage property; a reader hunting the same tells on
-a downsampled whole clip invents some and misses more. Steps 1 and 2 ask only what no
-tile can answer. Step 4 alone decides.
+Do not hunt located defects in steps 1 or 2. That is step 3, at 4x, with stated
+coverage. A reader hunting the same tells on a downsampled whole clip invents some
+and misses more.
 
 ---
 
@@ -160,9 +136,8 @@ Compare each reading against the same reading of the reference, never against an
 absolute standard.
 
 - **The original passes and the candidate does not** → **stop here.** Name which of
-  `S1`–`S5` failed and hand it back to `compile.md`, and from there to `generation.md`:
-  the spec or the prompt is wrong and the shot needs regenerating whole. Do not build
-  the step 3 artifacts — they
+  `S1`–`S5` failed and hand it back to `compile.md`: the spec or the prompt is wrong
+  and the shot needs regenerating whole. Do not build the step 3 artifacts — they
   would describe a clip that is about to be replaced.
 - **Both fail the same way** → the reading or the framing is at fault, not the
   candidate. Fix that and re-run before reading anything into the result.
@@ -175,11 +150,10 @@ absolute standard.
 
 One reading, the **skeptic**, on both clips, spawned in the same batch as step 1.
 
-Deliberately not a defect hunt. Every tell it could be sent looking for is a step 3
-package, read at 4x against the reference's own artifacts, and a reader given that
-list to hunt at whole-frame resolution returns worse answers about the same things. So
-it is given no list. What it uniquely provides is the reaction of someone who has not
-been told what to look for — which is the reaction the clip will actually get.
+Not a defect hunt — those are step 3 packages at 4x. A reader given that list at
+whole-frame resolution returns worse answers about the same things. Give it no list.
+What it uniquely provides is the reaction of someone who has not been told what to
+look for, which is the reaction the clip will actually get.
 
 > You are shown a short vertical video. Decide whether it was filmed on a real camera
 > or generated, from watching it — not from hunting for artifacts. Default to
@@ -197,13 +171,12 @@ been told what to look for — which is the reaction the clip will actually get.
 >
 > Return JSON: {verdict: real|generated, confidence: 0-1, what_drove_it: [...]}.
 
-**It has no pass mark and it does not gate.** Its verdict on the candidate alone
-carries little: the skeptic is told to default to "generated", so it calls real
-footage generated often enough that the absolute rate is noise. What carries is the
-difference between the two clips, which is why the reference is in the batch.
+**No pass mark, and it does not gate.** The skeptic is told to default to "generated",
+so it calls real footage generated often enough that the absolute rate is noise.
+What carries is the difference between the two clips.
 
-It is used twice, and adjudicates nothing either time: `what_drove_it` orders the
-packages in step 3, and the differential is read against the finished table in step 4.
+Used twice, adjudicates nothing either time: `what_drove_it` orders step 3; the
+differential is read against the table in step 4.
 
 ---
 

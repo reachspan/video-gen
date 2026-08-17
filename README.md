@@ -62,44 +62,25 @@ without stopping to ask** — interrupt it if you want it steered. Defaults:
 - **Seedance 2.0** for video. `--model NAME` for anything else in `higgsfield model
   list --video`.
 - **Every main character is recast** with a generated face, unless you say otherwise.
-- **Everything lands in `output/<id>/`.** `targets/` holds the original reference and
+- **Everything lands in `output/<id>/`.** The delivered take is
+  `take.v<n>.t<k>.selected.mp4`. `targets/` holds the original reference and
   nothing else, so a run can be deleted and repeated without downloading anything again.
 
 The command is not model-invocable: it spends credits, so it only runs when you type it.
 
 ## What it does
 
-1. **Compile** the reference into a spec and a prompt — separating what the clip *means*
-   from how it happens to look, so the person or the place can change without breaking
-   the thing that made it work.
-2. **Check the prompt** against the spec before spending anything — free, and it catches
-   the mistakes that would otherwise cost a whole generation.
-3. **Generate** a take. Every main character gets a generated face image first, because
-   identity written as text drifts and comes back better-looking than it should; a prop
-   that text keeps getting wrong gets a reference too, and that one is a photograph of a
-   real object rather than a generated still — a real thing is right about its own
-   geometry in a way a rendering can only be plausible about, and it is free. The
-   original clip can go in as a video reference as well — it supplies the camera and the
-   room, and costs you the cast, so it is a trade rather than a step.
-4. **Judge** the result, meaning first: agents who have not been told what the shot was
-   supposed to be watch it blind alongside the original and say what they think it is.
-   Only a clip that still means something gets the frame-by-frame sweep, where
-   measurements point at where to look and agents inspect every region in parallel. Out
-   comes a ship / do-not-ship call with reasons.
-5. **Fix** — a signal mismatch is corrected locally for free, a bad span is regenerated
-   on its own, and only a broken premise needs starting over.
+1. Compiles the reference into a spec and a prompt.
+2. Checks the prompt against the spec. Free.
+3. Casts, then generates a take.
+4. Judges it blind, then frame by frame. Ships or says why not.
+5. Fixes what it can — a signal mismatch locally, a bad span on its own — or starts over if the premise is broken.
 
 ## What to expect
 
-Generation is a numbers game: the reject ratio on professional work is around 64:1
-(`docs/pitfalls.md`), so budget for rejects rather than for one clean run. Clips
-degrade toward the end, so it is normal to generate longer than needed and trim.
-
-No measurement here can tell you whether a clip is real or generated — real footage
-varies more between cameras and shooting styles than generated footage differs from
-real. The measurements say where a result departs from its reference; the judgement
-is made by looking. `docs/pitfalls.md` catalogues what tends to go wrong, from a lost
-premise down to a garbled logo.
+Budget for rejects; several takes is normal. Quality falls off at the tail, so the run
+generates longer than the finished cut. Measurements compare a take to the reference;
+they do not say whether a clip is real.
 
 ## Downloading a reference on its own
 
@@ -115,11 +96,3 @@ Instagram rotates the internal `doc_id` this depends on. When the built-in ones 
 stale the tool says so; pull a fresh one from a browser DevTools capture of a reel
 page load and prepend it to `DOC_IDS`.
 
-## Working on it
-
-`AGENT.md` routes to the procedure for each step and defines the file layout;
-`skills/recreate/SKILL.md` is the command that drives them end to end. The tools are in
-`tools/`, reachable as `vg vq`, `vg sweep`, `vg gate`, `vg post` and `vg selftest`. From
-a checkout, call `bin/vg` or put `bin/` on your `PATH`.
-
-    vg selftest <clip.mp4>     inject known defects, confirm the metrics catch them

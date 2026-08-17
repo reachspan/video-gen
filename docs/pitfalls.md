@@ -1,12 +1,7 @@
-# Pitfalls — a catalogue of what goes wrong
+Tells for this format: vertical short-form, one seated speaker, a held prop,
+natural window light, platform re-encode.
 
-Filtered to **this** format: vertical short-form video, one seated speaker, a held
-prop, natural window light, delivered through a platform re-encode.
-
-**This file is a catalogue.** It names each failure and says how it reads on screen.
-It does not say how to sweep for one, who sweeps it, or what to do when one turns up.
-The procedure for every id — which artifact to open and what to do with it — is
-emitted per clip by `vg sweep plan`.
+Catalogue: name and on-screen tell. Per-clip procedure: `vg sweep plan`.
 
 **What earns an entry.** The target is a clip that could have been filmed, so an entry
 has to name a rule of physics, physiology or trade practice that the picture breaks,
