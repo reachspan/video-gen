@@ -89,6 +89,9 @@ duration. At minimum one each for:
 - **gesture** — what hands and bodies do: holds, shifts, regrips, what stays put
 - **every load-bearing prop** — its topology, what it is attached to, what changes
 - **camera** — framing and distance over time
+- **speech**, per person — the words verbatim, with the timestamp each line starts and
+  ends. Burned-in captions are a separate track: they are post, and they can differ
+  from what was said
 
 One fresh agent per track, cut by **subject** — one person's eyes, one prop, the camera
 — never by region. Subjects move: a strand runs across the picture, a limb reaches into
@@ -351,10 +354,17 @@ Blocks, in this order. Each answers one question and repeats nothing:
     LIGHTING          sources, direction, and what blows out
     CAMERA            how it is held and what it must not do
     TEXT AND BRANDING what carries no writing, and what is unbranded
-    AUDIO             who speaks, and that nobody narrates
+    AUDIO             who speaks, the exact words they say, and that nobody narrates
 
 Rules that come from what the models actually do:
 
+- **Quote the spoken line, never describe it.** Describing it does not get you a
+  paraphrase, it gets you gibberish — syllables with the prosody of speech and no words
+  in them, lip-synced confidently. Given the exact sentence, the model says it.
+  Transcribe as spoken and keep the broken grammar, the wrong tense and the odd word
+  order; correcting them costs the performance. Script in AUDIO, each line in the
+  TIMELINE at the clock reference where it starts. Where captions and audio disagree,
+  follow what is said — the caption is post.
 - **Negatives go inline.** No Seedance endpoint accepts `negative_prompt`.
 - **State counts explicitly.** Dialogue scenes attract extra onlookers, and removing
   them from a start frame does not stop it. "Exactly two other people, and no more."
