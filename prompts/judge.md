@@ -162,8 +162,9 @@ Compare each reading against the same reading of the reference, never against an
 absolute standard.
 
 - **The original passes and the candidate does not** → **stop here.** Name which of
-  `S1`–`S5` failed and hand it back to `compile.md`: the spec or the prompt is wrong
-  and the shot needs regenerating whole. Do not build the step 3 artifacts — they
+  `S1`–`S5` failed and hand it back to `compile.md`, and from there to `generation.md`:
+  the spec or the prompt is wrong and the shot needs regenerating whole. Do not build
+  the step 3 artifacts — they
   would describe a clip that is about to be replaced.
 - **Both fail the same way** → the reading or the framing is at fault, not the
   candidate. Fix that and re-run before reading anything into the result.
@@ -261,8 +262,9 @@ Collect every package into one table: id, verdict, where, severity. Step 1 alrea
 its say at the gate; what arrives here unspent is the skeptic. Worst first:
 
 - **Any `defect` at severity 4+** → do not ship, and name the class of fix. A semantic
-  failure (`S1`–`S5`) is a prompt problem: revise the spec and regenerate whole, per
-  `compile.md`. A signal mismatch is `post.md`, and it is free. A defect that occupies
+  failure (`S1`–`S5`) is a prompt problem: revise the spec per `compile.md` and
+  regenerate whole per `generation.md`. A signal mismatch is `post.md`, and it is free.
+  A defect that occupies
   part of the runtime and leaves the rest usable is `surgery.md`.
 - **`cannot_tell` on a pitfall that could carry severity 4** → resolve it before
   deciding. Re-crop tighter, or say plainly in the report that it went unresolved.

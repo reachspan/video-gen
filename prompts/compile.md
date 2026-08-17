@@ -89,6 +89,9 @@ duration. At minimum one each for:
 - **gesture** — what hands and bodies do: holds, shifts, regrips, what stays put
 - **every load-bearing prop** — its topology, what it is attached to, what changes
 - **camera** — framing and distance over time
+- **speech**, per person — the words verbatim, with the timestamp each line starts and
+  ends. Burned-in captions are a separate track: they are post, and they can differ
+  from what was said
 
 One fresh agent per track, cut by **subject** — one person's eyes, one prop, the camera
 — never by region. Subjects move: a strand runs across the picture, a limb reaches into
@@ -351,10 +354,17 @@ Blocks, in this order. Each answers one question and repeats nothing:
     LIGHTING          sources, direction, and what blows out
     CAMERA            how it is held and what it must not do
     TEXT AND BRANDING what carries no writing, and what is unbranded
-    AUDIO             who speaks, and that nobody narrates
+    AUDIO             who speaks, the exact words they say, and that nobody narrates
 
 Rules that come from what the models actually do:
 
+- **Quote the spoken line, never describe it.** Describing it does not get you a
+  paraphrase, it gets you gibberish — syllables with the prosody of speech and no words
+  in them, lip-synced confidently. Given the exact sentence, the model says it.
+  Transcribe as spoken and keep the broken grammar, the wrong tense and the odd word
+  order; correcting them costs the performance. Script in AUDIO, each line in the
+  TIMELINE at the clock reference where it starts. Where captions and audio disagree,
+  follow what is said — the caption is post.
 - **Negatives go inline.** No Seedance endpoint accepts `negative_prompt`.
 - **State counts explicitly.** Dialogue scenes attract extra onlookers, and removing
   them from a start frame does not stop it. "Exactly two other people, and no more."
@@ -429,28 +439,15 @@ into instruction.
 
 ### Swapping the character
 
-Generate the new identity with `face-gen.md`, then split the references explicitly:
+Generate the new identity with `face-gen.md` — every synthetic character gets an image,
+and text-only identity is not an option. The prompt's `REFERENCES` block then has to
+split what each reference supplies from what it must not: take the person from the face
+image, take only the camera and the room from the reference clip. Without that second
+half the original performer leaks back in.
 
-> @Image 1 is the man. @Video 1 is the camera and the room. Take the face, head,
-> build, skin and shirt from @Image 1 and keep them exactly. Take ONLY the camera
-> behaviour, shot size, subject distance and exposure from @Video 1 — do NOT take the
-> person from @Video 1, and do NOT copy any logo, badge or printed mark from it.
-
-Without that second half the original performer leaks back in.
-
-### When to reach for an image instead of text
-
-Generate a reference image whenever the thing is easier to *show* than to describe,
-and feed it in as an additional reference:
-
-- a prop whose exact geometry matters, or which must be unbranded and worn
-- a spatial arrangement — who is where, what is cropped by which edge
-- a costume or a specific material
-- anything you have already failed to get right in text twice
-
-Stills are cheap relative to video. A round of image iteration costs a fraction of
-one video generation and removes an ambiguity that would otherwise be re-rolled on
-every attempt.
+`generation.md` owns which references get attached and what the block has to say about
+each of them; write the block from there. It is also where the rule lives that a prop
+text keeps getting wrong should become an image rather than a third rewrite.
 
 ### Other user changes
 
@@ -467,5 +464,5 @@ usually free; a change to the mechanism is a different video.
 that no clause contradicts the premise, the affect or the composition. It is free and
 it catches the class of failure that costs a whole generation.
 
-Iterate until it passes. Then hand off to `judge.md`, which owns everything from
-generation onward.
+Iterate until it passes. Then hand off to `generation.md`, which attaches the
+references and makes one call, and from there to `judge.md`.

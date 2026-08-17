@@ -104,5 +104,6 @@ image is enough below that.
 ## Handing off
 
 The output of this is one PNG and the prompt that produced it. Both belong beside the
-target spec, so the character can be reproduced or revised later. `compile.md` picks
-it up from here and writes it into the video prompt as an identity reference.
+target spec, so the character can be reproduced or revised later. `compile.md` writes
+the character into the video prompt; `generation.md` attaches this exact file, and
+attaches one for every synthetic character in the shot rather than only the principal.
