@@ -34,9 +34,10 @@ the plugin, write to the project.
 `--max-credits 400`, or "spend up to 500", or a number in the prose.
 
 Everything billed counts against it, because everything billed comes out of the same
-balance: takes, surgery patches, and the face and prop stills alike. A take that comes
+balance: takes, surgery patches, and the casting stills alike. A take that comes
 back dead still spent its credits. What is free stays free and never counts — the gate,
-`post.py`, and every inspection step in `judge.md`.
+`post.py`, sourcing a prop photograph per `prop-ref.md`, and every inspection step in
+`judge.md`.
 
 **Price each call before making it, and never from a number written down here or
 anywhere else.** `generate cost` takes the same flags as `generate create`, so price the
@@ -114,15 +115,16 @@ supports, write down that you chose it, and keep going.
     vg doctor
 
 Every line must read `OK`. It checks the interpreter and its packages, `ffmpeg` and
-`ffprobe`, the `higgsfield` CLI, and that the account is authenticated with credits on
-it. On a first run `vg setup` builds the environment; run it if `doctor` says to.
+`ffprobe`, the `higgsfield` CLI, and that the account is authenticated. On a first run
+`vg setup` builds the environment; run it if `doctor` says to.
 
 If authentication is what is missing, `higgsfield auth login` is interactive and opens a
 browser — you cannot complete it. Stop and tell the user to run it. There is no API-key
 mode to fall back on.
 
-Read the credit balance `doctor` prints. If it is below the budget, the balance is the
-real ceiling — say so up front and run against that instead.
+`doctor` says whether the account is authenticated; it does not report a balance. If the
+balance turns out to be lower than the budget, the balance is the real ceiling — say so
+and run against that instead.
 
 ## 1. Get the reference
 
@@ -168,8 +170,11 @@ and write the still to `output/<id>/ref.<name>.png`. Reuse one file per characte
 every take; do not regenerate a character between iterations, or two takes cannot be
 cut together.
 
-Props may want a still too. `generation.md` §1 says which ones and why; take that
-decision from there rather than guessing here.
+Props may want a reference too, and that one is a photograph of a real object rather
+than a generation: follow `${CLAUDE_PLUGIN_ROOT}/prompts/prop-ref.md` and write it to the
+same `ref.<name>.png` slot. `generation.md` §1 says which objects are worth one and why;
+take that decision from there rather than guessing here. Sourcing costs nothing, so an
+object that clears §1's bar gets its photograph whatever the budget looks like.
 
 ## 4. Gate
 
@@ -206,6 +211,11 @@ While the balance can cover another take:
 
 Carry what you learned into the next prompt revision rather than re-rolling the same
 one; `generation.md` §1 says what to do with a clause that has failed twice.
+
+Write the revision in the register `${CLAUDE_PLUGIN_ROOT}/docs/prompt-language.md` names.
+A judge report describes what the defect looks like, and pasting that description into the
+prompt writes a pose — which loses the element the fix was protecting while every word of
+it stays on the page.
 
 ## 6. Report
 
