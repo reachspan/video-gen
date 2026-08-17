@@ -11,8 +11,8 @@ recreates. What it reads, and what each of those does NOT do:
 |---|---|---|
 | `docs/pitfalls.md` | catalogue of what goes wrong: the `S` ids and the `T` ids | say how to check any of it |
 | `docs/evidence.md` | how to read the artifacts and the metrics | list pitfalls, or decide |
-| `tools/sweep.py plan` | the per-pitfall procedure for *this* clip, and the work packages | judge what it finds |
-| `tools/vq.py measure` | distance from the reference | decide anything |
+| `vg sweep plan` | the per-pitfall procedure for *this* clip, and the work packages | judge what it finds |
+| `vg vq measure` | distance from the reference | decide anything |
 
 ## Nothing here is judged in absolute terms
 
@@ -211,12 +211,12 @@ packages in step 3, and the differential is read against the finished table in s
 
 Only reached if step 1 passed. Build both clips' evidence, then dispatch the sweep.
 
-    python tools/vq.py measure   ref.mp4 out.mp4 > measure.json
-    python tools/sweep.py plan   out.mp4 ref.mp4 > plan.md
-    python tools/sweep.py strips out.mp4 sweep/
-    python tools/sweep.py tiles  out.mp4 sweep/
-    python tools/sweep.py strips ref.mp4 sweep_ref/     # the control
-    python tools/sweep.py tiles  ref.mp4 sweep_ref/
+    vg vq measure   ref.mp4 out.mp4 > measure.json
+    vg sweep plan   out.mp4 ref.mp4 > plan.md
+    vg sweep strips out.mp4 sweep/
+    vg sweep tiles  out.mp4 sweep/
+    vg sweep strips ref.mp4 sweep_ref/     # the control
+    vg sweep tiles  ref.mp4 sweep_ref/
 
 **The reference's artifacts are not optional.** A slit-scan is read against the
 reference's slit-scan or it is read against nothing.

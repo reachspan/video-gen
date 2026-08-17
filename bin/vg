@@ -1,0 +1,150 @@
+#!/bin/sh
+# vg — run the bundled tools with the bundled interpreter.
+#
+# The tools are the same whether this repo is checked out directly or installed
+# as a Claude Code plugin; only their location and their interpreter differ. This
+# resolves both, so every procedure can say `vg vq measure ...` and be correct in
+# either case.
+#
+#   vg vq|sweep|gate|post|selftest ARGS   the measurement and post tools
+#   vg ig-dl ARGS                         the reference downloader
+#   vg setup                              create the venv and install deps
+#   vg doctor                             check every dependency, exit 1 on any gap
+#   vg python ARGS                        the resolved interpreter
+#   vg root                               print the install root
+set -eu
+
+self=$0
+while [ -L "$self" ]; do                       # resolve symlinks to find the root
+    link=$(readlink "$self")
+    case $link in
+        /*) self=$link ;;
+        *) self=$(dirname -- "$self")/$link ;;
+    esac
+done
+ROOT=$(CDPATH= cd -- "$(dirname -- "$self")/.." && pwd)
+
+# A plugin install is read-only and replaced on update, so the venv goes in the
+# data directory that survives both. A plain checkout keeps it beside the source.
+if [ -n "${CLAUDE_PLUGIN_DATA:-}" ]; then
+    VENV=$CLAUDE_PLUGIN_DATA/venv
+else
+    VENV=$ROOT/.venv
+fi
+
+REQS=$ROOT/requirements.txt
+
+resolve_python() {
+    if [ -n "${VG_PYTHON:-}" ] && [ -x "${VG_PYTHON:-}" ]; then
+        echo "$VG_PYTHON"
+    elif [ -x "$VENV/bin/python" ]; then
+        echo "$VENV/bin/python"
+    else
+        echo ""
+    fi
+}
+
+need_python() {
+    py=$(resolve_python)
+    if [ -z "$py" ]; then
+        echo "vg: no interpreter yet — run 'vg setup' (expected at $VENV/bin/python)" >&2
+        exit 1
+    fi
+    echo "$py"
+}
+
+do_setup() {
+    if [ -x "$VENV/bin/python" ]; then
+        echo "venv    $VENV (exists)"
+    else
+        mkdir -p "$(dirname -- "$VENV")"
+        if command -v uv >/dev/null 2>&1; then
+            uv venv --python 3.13 "$VENV" >&2 || uv venv "$VENV" >&2
+        elif command -v python3 >/dev/null 2>&1; then
+            python3 -m venv "$VENV" >&2
+        else
+            echo "vg: no python3 and no uv on PATH; install one and re-run" >&2
+            exit 1
+        fi
+        echo "venv    $VENV (created)"
+    fi
+    if command -v uv >/dev/null 2>&1; then
+        uv pip install --python "$VENV/bin/python" -r "$REQS" >&2
+    else
+        "$VENV/bin/python" -m pip install --quiet --upgrade pip >&2
+        "$VENV/bin/python" -m pip install --quiet -r "$REQS" >&2
+    fi
+    echo "deps    installed from $REQS"
+}
+
+do_doctor() {
+    rc=0
+    report() {                                 # report NAME OK|MISSING [detail]
+        printf '%-12s %-8s %s\n' "$1" "$2" "${3:-}"
+        [ "$2" = OK ] || rc=1
+    }
+
+    py=$(resolve_python)
+    if [ -z "$py" ]; then
+        report python MISSING "no venv — run 'vg setup'"
+    else
+        report python OK "$($py -V 2>&1)"
+        missing=$("$py" - <<'EOF' 2>/dev/null || echo "could not run the interpreter"
+import importlib.util
+mods = {"cv2": "opencv-python-headless", "skimage": "scikit-image",
+        "numpy": "numpy", "scipy": "scipy", "av": "av"}
+print(" ".join(p for m, p in mods.items() if not importlib.util.find_spec(m)))
+EOF
+)
+        if [ -n "$missing" ]; then
+            report deps MISSING "$missing — run 'vg setup'"
+        else
+            report deps OK "cv2 skimage numpy scipy av"
+        fi
+    fi
+
+    for b in ffmpeg ffprobe; do
+        if command -v "$b" >/dev/null 2>&1; then
+            report "$b" OK "$(command -v "$b")"
+        else
+            report "$b" MISSING "install ffmpeg and put it on PATH"
+        fi
+    done
+
+    if command -v higgsfield >/dev/null 2>&1; then
+        report higgsfield OK "$(higgsfield --version 2>&1 | head -1)"
+        if status=$(higgsfield account status 2>&1) && [ -n "$status" ]; then
+            case $status in
+                *xpired*|*uthenticat*|*ogin*) report auth MISSING "run 'higgsfield auth login'" ;;
+                *) report auth OK "$status" ;;
+            esac
+        else
+            report auth MISSING "run 'higgsfield auth login' (interactive; no API-key mode exists)"
+        fi
+    else
+        report higgsfield MISSING "curl -fsSL https://raw.githubusercontent.com/higgsfield-ai/cli/main/install.sh | sh"
+        report auth MISSING "install the CLI first, then 'higgsfield auth login'"
+    fi
+
+    if [ "$rc" = 0 ]; then
+        printf '\nall dependencies present\n'
+    else
+        printf '\nunmet dependencies above; fix them before generating\n'
+    fi
+    return "$rc"
+}
+
+cmd=${1:-}
+[ "$#" -gt 0 ] && shift
+
+case $cmd in
+    vq|sweep|gate|post|selftest) exec "$(need_python)" "$ROOT/tools/$cmd.py" "$@" ;;
+    ig-dl)                       exec "$(need_python)" "$ROOT/utils/ig-dl" "$@" ;;
+    python)                      exec "$(need_python)" "$@" ;;
+    setup)                       do_setup ;;
+    doctor)                      do_doctor ;;
+    root)                        echo "$ROOT" ;;
+    venv)                        echo "$VENV" ;;
+    ""|-h|--help|help)           sed -n '2,/^[^#]/p' "$0" | sed -n 's/^#\{1,\} \{0,1\}//p' ;;
+    *) echo "vg: unknown command '$cmd' — try 'vg help'" >&2; exit 1 ;;
+esac

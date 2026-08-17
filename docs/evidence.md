@@ -1,16 +1,16 @@
 # Evidence — what the artifacts and the metrics show
 
-Reference for reading what `tools/sweep.py` and `tools/vq.py` produce. It explains
+Reference for reading what `vg sweep` and `vg vq` produce. It explains
 what each view covers and what each number means; it does not say what to run, in
 what order, or how to decide. That belongs to whoever is driving the check.
 
 Safe to hand to a blind inspector: nothing here says what the clip was supposed to
 contain.
 
-    python tools/sweep.py strips CLIP DIR      temporal coverage
-    python tools/sweep.py tiles  CLIP DIR      spatial coverage
-    python tools/sweep.py plan   CLIP [REF]    the per-pitfall checklist for this clip
-    python tools/vq.py   measure REF CAND      distance from the reference
+    vg sweep strips CLIP DIR      temporal coverage
+    vg sweep tiles  CLIP DIR      spatial coverage
+    vg sweep plan   CLIP [REF]    the per-pitfall checklist for this clip
+    vg vq   measure REF CAND      distance from the reference
 
 ## The problem the artifacts solve
 
