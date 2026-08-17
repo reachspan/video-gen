@@ -11,7 +11,33 @@ original work. The prompt is disposable; the spec is not.
 
 `targets/` is gitignored. These are working files, not published output.
 
-## 1. Inventory the reference
+## 1. Say what happens
+
+Before measuring anything, watch the clip and write down in plain language:
+
+- **The plot.** What happens, in order. Who does what, and what has changed by the end.
+- **The format.** What kind of video this is, the genre it borrows, and what that genre
+  normally does.
+- **Each person's role** — their part in the plot, not their appearance.
+- **What each role implies.** A role carries physical conditions with it — how a person
+  is positioned, what is done to them, what they would be holding or wearing. Write those
+  expectations down before you have seen them, because they are what every later
+  observation gets checked against.
+
+Then the **premise**: what the video is doing and why it is funny, interesting or
+watchable, in one paragraph. And the **mechanism**: the two to four specific devices
+that deliver it — a visual pun, a mismatch between what is said and how it is said,
+something intruding at the edges, a late reveal.
+
+This comes first because the two instruments fail differently and each is the check on
+the other. Reading a plot, a genre, a role or an affect is coarse and robust. Counting
+hands, resolving a join, deciding where one object ends and the next begins is precise
+and fragile — adjacent things merge into one, a single thing reads as two, and the
+mistake looks exactly like an observation. Establish the plot first so the measurements have something
+to be tested against; measure afterwards so the plot has something to be corrected by.
+Neither settles the spec on its own.
+
+## 2. Inventory and reconstruct
 
 Look before writing. The sweep tools work on a reference just as well as on a
 candidate, and they are the cheapest way to see everything that is actually there:
@@ -28,50 +54,35 @@ frame are easy to overlook and are often doing the work.
 
 ### This step is not time-boxed
 
-Every later step is cheap to redo and this one is not. A misread here clears the gate,
-generates faithfully, and comes back confirmed by every downstream reader, because all
-of them are checking your sentence instead of the clip — so it survives a whole
-production run and costs every generation in it. Spend as long and as many tokens as
-it takes to be certain. There is no budget for this step and no reason to hurry it.
+Every later step is cheap to redo; this one is not. A misread here clears the gate,
+generates faithfully, and comes back confirmed by every downstream reader — all of them
+check your sentence, not the clip — so it survives a whole production run and costs
+every generation in it. Take as long as it takes. Three rules follow.
 
-**Sampling is not inspection.** Do not read a prop off three frames, or ten. For each
-load-bearing region, cut that region out of *every* frame and lay the run out as
-contact sheets, then read them in order:
+**Sample every frame, not a few.** For each load-bearing subject, cut its region out of
+the whole clip as contact sheets and read them in order, raising `fps` until nothing
+changes between adjacent cells:
 
     ffmpeg -i ref.mp4 -vf "fps=N,crop=W:H:X:Y,scale=400:-1" sheet/f%03d.jpg
     ffmpeg -pattern_type glob -i 'sheet/f*.jpg' -filter_complex tile=3x4 sheet%d.jpg
 
-Raise `fps` until nothing changes between adjacent cells. A thing that holds its shape
-across every frame is an observation; a thing seen three times is still a guess.
+**Zoom, but know what it cannot do.** 4x is where you start; when a count is in doubt,
+crop tighter — 6x, 8x — and look for the *join* a wider crop merges away: two hands read
+as one mass, two strands as one strand, two people as one person. Magnification settles
+some of these and quietly fails at others, and it will not tell you which. When two
+looks disagree, stop zooming and use the step below.
 
-**Zoom until the question is answered, not until the tile runs out.** The 4x tiles are
-where you start, not where you stop. When you cannot tell how many of something there
-are, crop tighter and scale harder — 6x, 8x, whatever settles it — and look for the
-*join*: the seam a wider crop merges away. Two hands read as one mass, two strands as
-one strand, two people as one person, and every one of those resolves at higher
-magnification.
-
-Never close the gap by inference. "It must be his other hand", "that has to be the
-same strand" — that is the shape of the error, and once it is written into `what` it is
-unfalsifiable for everyone downstream. If it will not resolve at any magnification,
-record it in `known_blind_spots` and say so plainly.
-
-**Count before you describe.** How many hands are in the picture? How many fists? How
-many separate strands, tools, people? Write the numbers down first, because a count is
-falsifiable and a description is not. Then for each one: **whose is it, and what is it
-attached to?** Trace every limb back to a shoulder or to the edge it enters from, every
-strand end to end, every tool to the hand holding it. Anything entering from an edge
-belongs to a body you cannot see, and quietly assigning it to the person you *can* see
-is the easiest mistake in this format to make and the hardest to notice afterwards.
+**Count before you describe.** How many hands, fists, strands, tools, people? Numbers
+first — a count is falsifiable, a description is not. Then for each: **whose is it, and
+what is it attached to?** Trace every limb back to a shoulder or to the edge it enters
+from, every strand end to end, every tool to the hand holding it. Anything entering from
+an edge belongs to a body you cannot see.
 
 ### Reconstruct one track at a time, and run them in parallel
 
-A clip is not a list of objects. It is several things each doing something over time,
-and the spec is only as good as its worst-understood one. So reconstruct them as
-separate **tracks**, each covering the whole duration. A track is checkable; an
-impression is not.
-
-At minimum, one track each for:
+A clip is several things each doing something over time, and the spec is only as good
+as its worst-understood one. Reconstruct them as **tracks**, each covering the whole
+duration. At minimum one each for:
 
 - **gaze**, per person — where the eyes point, when they move, in which direction, and
   what the lids do
@@ -79,13 +90,16 @@ At minimum, one track each for:
 - **every load-bearing prop** — its topology, what it is attached to, what changes
 - **camera** — framing and distance over time
 
-Each track lives in a different crop, so they parallelise: one fresh agent per track,
-one crop each. Cut them by region rather than by theme, for the same reason the sweep
-packages are — two agents needing the same crop duplicate the work and set the pace for
-the whole run.
+One fresh agent per track, cut by **subject** — one person's eyes, one prop, the camera
+— never by region. Subjects move: a strand runs across the picture, a limb reaches into
+someone else's space, a head drifts with the framing. So crops overlap freely, and a
+track follows its subject wherever it goes rather than letting it leave the crop. Two
+agents on the same pixels is not waste; they answer different questions and run
+concurrently anyway. (`sweep.py` partitions instead, because its packages cover a fixed
+set of tiles. A track is not a region.)
 
-Give a track agent no premise and no spec. One told what the shot means will hand the
-meaning back to you as an observation.
+Give a track agent no premise and no spec: one told what the shot means hands the
+meaning back as an observation.
 
 > You are reconstructing ONE track of a short video: **<TRACK>**. Work only inside the
 > crop you are given, and report only what is inside it.
@@ -109,32 +123,41 @@ meaning back to you as an observation.
 > Return JSON: {track, spans: [{t_start, t_end, state, changed_at_boundary}],
 > counts: {...}, unresolved: [...]}
 
-Merge the returned tracks into `tracks` in the spec, then resolve the targets yourself:
-a track that reports "eyes go down and to screen-left at 2.4s" plus a track that reports
-a person standing at that edge is what tells you he is checking somebody. Neither agent
-could have told you that, and neither should have tried.
+Merge the returns into `tracks`, then resolve targets yourself: one track reporting
+where the eyes go plus another reporting who stands there is what identifies who is
+being checked. No single track could know it.
+
+### When observations and expectations disagree
+
+Tracks disagree with each other, and your own eyes disagree with themselves at different
+magnifications. Neither instrument outranks the other, so do not resolve it by picking a
+side, and do not resolve it by zooming again.
+
+**Find the reading that satisfies both.** A conflict usually means an observation is
+being over-extended, not that it is wrong. An accurate description of a *part* can carry
+a false implication about the whole — what was seen is right, what it was taken to mean
+is not. Ask what arrangement would produce both the thing that was observed and the thing
+the scene requires.
+
+Two checks that usually find it:
+
+- **Count what must exist.** Every person in the shot has two hands and two arms whether
+  or not you can see them. An arrangement that leaves one unaccounted for is the wrong
+  arrangement, whoever reported it.
+- **Ask whether the scene still works.** If taking an observation literally means a
+  person has one arm, or a prop nobody is holding, or an action nobody would perform,
+  that is a reason to look again — not a discovery about the video.
+
+If no reading satisfies both, record it in `known_blind_spots` rather than forcing one.
+Either way, label how you got there: reasoning belongs in the premise and in `function`,
+`what` stays the observation. A conclusion reached by argument is fine and often right;
+one reached by argument and then written down as though it were seen is what nothing
+downstream can catch.
 
 Record the duration, whether there is a cut, and where the beats fall, into `shot`.
 If you are compiling part of a longer reference, put the span in `segment`; a spec
 that does not say which seconds it describes cannot be checked against anything.
 `shot.beats` is the spine; `tracks` is what each thing is doing against it.
-
-Then ask of every prop: **what is it for?** A thing in a person's hands is rarely
-just a thing. It may be a pun, a threat, a tell, or genuine busywork, and those
-demand different prompts — busywork can be swapped for anything, a pun cannot be
-touched. Getting this wrong is the failure mode that survives every downstream check,
-because the object will be present and correct and mean nothing.
-
-## 2. Find the premise before listing anything
-
-**Write down what the video is doing and why it is funny, interesting or watchable,
-in one paragraph, before you inventory a single element.** A list of objects
-assembled without the premise produces a prompt that reproduces the furniture and
-loses the point — a clip can contain every element and mean nothing.
-
-Then write the **mechanism**: the two to four specific devices that deliver the
-premise. Not "it is funny" but *how* — a visual pun, a mismatch between what is said
-and how it is said, something intruding at the edges, a late reveal.
 
 ## 3. Classify every element by what it does
 
@@ -148,7 +171,12 @@ For each thing in the frame, record:
 | `necessity` | `required` or `preferred` |
 | `evidence` | where you saw it, so a later reader can re-check |
 
-`function` is the field that earns its keep. A constraint added later for an
+`function` is the field that earns its keep. Ask it of every prop: **what is it for?**
+A thing in a person's hands is rarely just a thing — it may be a pun, a threat, a tell,
+or genuine busywork, and those demand different prompts. Busywork can be swapped for
+anything; a pun cannot be touched.
+
+It also survives edits that `what` does not. A constraint added later for an
 unrelated reason — identity safety, a length trim — can delete a required element,
 and nothing downstream will notice because every other check measures pixels rather
 than meaning. Write the function so the deletion is obviously wrong.
@@ -167,21 +195,7 @@ Also record:
   failure this spec exists to catch.
 - `forbidden_assertions` — sentences the prompt must never contain.
 
-### A trap in `forbidden_assertions`
-
-Do not add a blunt negation that collides with a required element. Suppressing the
-model's habit of adding extra people requires the prompt to say there are no
-additional people — which a crude "no other people in frame" rule cannot distinguish
-from deleting the two people who are supposed to be there. Keep forbidden assertions
-narrow and literal, and let element coverage enforce presence.
-
-The collision is not limited to counting people. Any instruction that *tightens* —
-a closer shot size, a push-in, a tidier background — can delete an element at the
-frame edge as a side effect, and G2 will not notice, because the element is still
-named in the prompt while no longer being in the shot the prompt describes. Record
-that reasoning next to the assertion so a later editor sees the coupling.
-
-## 3a. The file
+### The file
 
 `gate.py` hard-requires `elements[]`, `forbidden_assertions`, `performance`
 and `composition`. Everything else is for the human reader and for whoever revises
@@ -202,7 +216,7 @@ this is the shape:
     "camera": [{"t": "...", "state": "...", "changed_at": "..."}]
   },
   "elements": [
-    {"id": "cable-coil",
+    {"id": "<short-handle>",
      "what": "<what a camera recorded: objects, counts, contacts, whose limb. No reading.>",
      "function": "<what breaks if this is removed>",
      "necessity": "required",
@@ -225,42 +239,37 @@ this is the shape:
 }
 ```
 
-### How to write `what`
+### Traps
 
-Two ways to get it wrong, and both are silent.
+Four ways to write a spec that passes everything and checks nothing.
 
-**Do not write it as a prompt sentence.** G2 scores stem-token overlap between each
-element's `what` and the prompt. If you author both in one pass, phrasing the `what`
-the way you intend to phrase the prompt, it passes by construction and has checked
-nothing. Write it as you would describe the thing to someone who has not seen the
-video, then write the prompt separately. A gate that passes on prose written to
-satisfy it is not evidence.
+**A blunt negation can delete a required element.** Suppressing the model's habit of
+adding onlookers needs the prompt to say there are no *additional* people — which a
+crude "no other people in frame" cannot distinguish from deleting the two who belong
+there. Nor is the collision limited to counting: any instruction that *tightens* — a
+closer shot size, a push-in, a tidier background — can drop an element at the frame
+edge, and G2 will not notice, because the element is still named in the prompt while
+no longer being in the shot the prompt describes. Keep assertions narrow and literal,
+let element coverage enforce presence, and record the coupling beside the assertion.
 
-**Do not write the reading into it either.** `what` is the observation; `function` is
-the reading. A `what` that already carries the interpretation — "wrapped so that they
-read as bound" — cannot be checked against the video by anybody, including you,
-because the sentence is true of the reading rather than of the picture. Record what a
-camera recorded: which objects, how many, touching what, held by whom. Then let
-`function` say what it means.
+**`what` must not be a prompt sentence.** G2 scores stem-token overlap between each
+element's `what` and the prompt. Author both in one pass and it passes by construction,
+having checked nothing. Describe the thing to someone who has not seen the video, then
+write the prompt separately.
 
-That one is the most expensive mistake available here. A wrong reading written as an
-observation passes the gate, generates faithfully, and comes back confirmed by every
-downstream reader — because each of them is checking your sentence rather than the
-clip. It is also the mistake the next step exists to catch.
+**`what` must not carry the reading.** `what` is the observation, `function` is the
+reading. A `what` that states what something *reads as* rather than what it is cannot be
+checked against the video by anybody, including you, because the sentence is true of the
+reading rather than of the picture.
 
-### Affect is not covered by any gate
-
-G4 checks only `forbidden_affect`. Nothing verifies that `performance.affect`
-survived into the prompt, so on a clip where the affect *is* the joke, also record it
-as a `required` element — that is the only way the coverage check sees it.
+**Affect is invisible to the gates.** G4 checks only `forbidden_affect`; nothing
+verifies that `performance.affect` reached the prompt. Where affect *is* the joke,
+record it as a `required` element too — the only way coverage sees it.
 
 ## 4. Red-team the spec
 
-Compiling is one person reading one video once, and a misread at this stage is the
-most expensive error in the pipeline. It clears the gate, generates faithfully, and
-comes back confirmed by every downstream reader, because all of them are checking your
-sentence instead of the clip. So before writing a prompt, hand the spec's observations
-to a fresh agent and ask it to knock them down.
+Compiling is one person reading one video once. Before writing a prompt, hand the
+spec's observations to a fresh agent and ask it to knock them down.
 
 Pull the `what` fields out of `elements[]` with their ids and list them as numbered
 claims. Send the observations only — strip anything interpretive, because a claim that
@@ -339,6 +348,7 @@ Rules that come from what the models actually do:
 - **Forbid in-frame text and logos.** Any glyph will be reproduced garbled, and a
   wrong wordmark on an otherwise convincing object reads as fake faster than a
   blank one.
+
 ### Constrain what a thing is, not where it sits
 
 Every constraint falls into one of three registers, and only two of them are safe to
@@ -350,16 +360,14 @@ write:
 | relation | how things **stand to each other** — what holds what, what is within reach | yes, this is the target |
 | pose | where a thing **sits at each instant** | never |
 
-A pose constraint is satisfiable by exactly one configuration, so the model spends
-its whole motion budget holding that configuration and the thing goes dead. Identity
-and relation each admit a *family* of configurations, and movement survives inside a
-family. So pair every lock with the motion that has to continue through it: a strand
-keeps its route and its count while the hands fidget inside it; a tool stays the same
-tool at the same distance while the hand holding it drifts and re-grips.
-
-The freeze is easiest to write by accident for whatever you were not thinking about —
-a figure at the frame edge, a hand that only holds something. It reads exactly as
-badly there as on the speaker.
+A pose constraint is satisfiable by exactly one configuration, so the model spends its
+whole motion budget holding it and the thing goes dead. Identity and relation each admit
+a *family* of configurations, and movement survives inside a family. So pair every lock
+with the motion that has to continue through it: a strand keeps its route and its count
+while the hands fidget inside it; a tool stays the same tool at the same distance while
+the hand holding it drifts and re-grips. This applies to whatever you were not thinking
+about — a figure at the frame edge, a hand that only holds something — where the freeze
+reads exactly as badly and is easier to write by accident.
 
 **Geometry is a bound, never a target.** A measured figure is safe as a limit and
 dangerous as a value: "no deeper than a fifth of the frame width" admits a family,
@@ -372,36 +380,32 @@ body, and naming the object alone fixes neither. Prefer the relation to either:
 ### Write the timeline, not only the state
 
 The blocks above describe what is true for the whole take. Anything that **changes**
-needs a time, or the model picks one state and holds it — which is how a performance
-becomes a pose that happens to last four seconds.
+needs a time, or the model picks one state and holds it for the duration.
 
 So add a TIMELINE block, written from `tracks`. One line per change, with a clock
 reference and the track it belongs to:
 
     TIMELINE
-    0.0-0.6  eyes off the lens, down and to his right; lids low
-    0.6      eyes come up to the lens as the line starts
-    0.6-1.8  speaking, eyes on the lens, brow moving on the stressed word
-    1.8      eyes drop away again, same direction, lids lower
-    2.4      weight shifts on the seat; hands sink and come back
-    ...
+    0.0-0.6  <track>: state at the top of the take
+    0.6      <track>: what changes, and in which direction
+    0.6-1.8  <track>: the state it holds through the next beat
+    1.8      <track>: the next change
+    ...     one line per change, each naming its track and its clock reference
 
-Two rules for it, both learned the hard way:
+Two rules for it:
 
 **Say what holds, not only what moves.** A timeline listing only changes reads as
 permission to change everything unlisted. Close it with the things that must be
 identical at the first frame and the last — the wrap, the count, the shot size, who is
 holding what.
 
-**Do not write a pose per instant.** A dense timeline of positions is the freeze
-failure at finer resolution: the model spends its budget hitting marks and the life
-between them disappears. Time the *transitions* — when a thing starts, when it changes,
-which direction it goes — and leave the state between them free.
+**Do not write a pose per instant** — that is the freeze above at finer resolution.
+Time the *transitions*: when a thing starts, when it changes, which direction it goes.
+Leave the state between them free.
 
-There is no documented per-timestamp parameter on the endpoints used here, so the
-timeline is prose the model reads like any other. Check anyway before writing it: if
-the current model exposes a multi-prompt or per-segment input, the timeline is what
-fills it, and the mechanism changes from persuasion to instruction.
+No endpoint here documents a per-timestamp parameter, so the timeline is prose. Check
+before writing it anyway: a multi-prompt or per-segment input turns it from persuasion
+into instruction.
 
 ## 6. Swaps and changes
 
