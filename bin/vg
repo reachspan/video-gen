@@ -24,12 +24,19 @@ while [ -L "$self" ]; do                       # resolve symlinks to find the ro
 done
 ROOT=$(CDPATH= cd -- "$(dirname -- "$self")/.." && pwd)
 
-# A plugin install is read-only and replaced on update, so the venv goes in the
-# data directory that survives both. A plain checkout keeps it beside the source.
-if [ -n "${CLAUDE_PLUGIN_DATA:-}" ]; then
+# Where the venv lives, in precedence order. CLAUDE_PLUGIN_DATA is documented for
+# hooks and for substitution inside skill content, and is NOT reliably present in
+# the Bash environment, so it cannot be the only answer: an installed plugin would
+# build its venv inside the install directory and lose it on the next update. The
+# shared fallback is outside the install, so it survives one.
+if [ -n "${VG_VENV:-}" ]; then
+    VENV=$VG_VENV
+elif [ -n "${CLAUDE_PLUGIN_DATA:-}" ]; then
     VENV=$CLAUDE_PLUGIN_DATA/venv
-else
+elif [ -d "$ROOT/.venv" ]; then
     VENV=$ROOT/.venv
+else
+    VENV=${XDG_DATA_HOME:-$HOME/.local/share}/video-gen/venv
 fi
 
 REQS=$ROOT/requirements.txt
