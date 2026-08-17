@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Pre-generation gates. Run before spending credits.
 
-  gate.py INTENT.json PROMPT.txt
+  gate.py INTENT.json PROMPT.txt [PREVIOUS.txt]
 
 G1 element coverage    - every required element must survive into the prompt
 G2 constraint conflict - no prompt clause may assert a forbidden sentence
@@ -9,8 +9,13 @@ G3 affect/composition  - nor a forbidden affect or framing
 
 A constraint added for one reason can delete a required element as a side effect,
 and nothing downstream will catch it: every other check in the pipeline measures
-pixels, not meaning."""
-import json, re, sys
+pixels, not meaning.
+
+Then a note, which gates nothing and changes no exit code. When a block has grown
+a lot while the required element inside it still says what it said before, the
+addition may now outweigh what it protects - G1 scores words present, not words
+that won. PREVIOUS.txt defaults to the highest prompt.v<n>.txt beside this one."""
+import json, pathlib, re, sys
 
 STOP = set("""a an the of in on at to and or with his her its this that is are be as
 for from into by up out over under near just only very much each both all some no not
@@ -33,7 +38,93 @@ def stems(ws):
     return {stem(w) for w in ws}
 
 
-def main(intent_path, prompt_path, thresh=0.34):
+# A block header is a short line in capitals on its own: GLOBAL STYLE, PROP AND
+# HANDS, TIMELINE. Capitalised words inside a sentence sit on longer lines.
+HEAD = re.compile(r"^[A-Z][A-Z0-9 /&'()-]{2,28}$")
+
+
+def split_blocks(text):
+    """{block name: body}. Everything before the first header is dropped."""
+    out, name, body = {}, None, []
+    for line in text.splitlines():
+        if HEAD.match(line.strip()):
+            if name:
+                out[name] = "\n".join(body)
+            name, body = line.strip(), []
+        elif name:
+            body.append(line)
+    if name:
+        out[name] = "\n".join(body)
+    return out
+
+
+def anchor(blocks, want):
+    """The block a required element lives in, and its clearest sentence there."""
+    best = None
+    for name, body in blocks.items():
+        for s in re.split(r"(?<=[.!?])\s+|\n", body):
+            if not s.strip():
+                continue
+            score = len(want & stems(toks(s)))
+            if best is None or score > best[0]:
+                best = (score, name, " ".join(s.split()))
+    return best if best and best[0] else None
+
+
+def previous(prompt_path):
+    """The highest-numbered earlier revision beside this one, by convention."""
+    p = pathlib.Path(prompt_path)
+    m = re.search(r"\.v(\d+)\.", p.name)
+    if not m:
+        return None
+    n = int(m.group(1))
+    earlier = []
+    for q in p.parent.glob(p.name.replace(f".v{n}.", ".v*.")):
+        k = re.search(r"\.v(\d+)\.", q.name)
+        if k and int(k.group(1)) < n:
+            earlier.append((int(k.group(1)), q))
+    return max(earlier)[1] if earlier else None
+
+
+def note_growth(intent, prompt, prompt_path, prev_path, min_words=25, min_frac=0.25):
+    """Blocks that grew while the element inside them stayed the same.
+
+    Not a gate. A revision loses an element by outweighing it rather than by
+    deleting it, which every other check here is blind to by construction.
+    """
+    prev_path = prev_path or previous(prompt_path)
+    if not prev_path or not pathlib.Path(prev_path).exists():
+        return
+    prev = pathlib.Path(prev_path).read_text()
+    now_b, was_b = split_blocks(prompt), split_blocks(prev)
+    if not now_b or not was_b:
+        return
+
+    grown = {}
+    for el in intent["elements"]:
+        if el["necessity"] != "required":
+            continue
+        want = stems(toks(el["what"]))
+        a, b = anchor(now_b, want), anchor(was_b, want)
+        if not a or not b or a[2] != b[2]:      # assertion itself was rewritten
+            continue
+        name = a[1]
+        if name not in was_b:
+            continue
+        old, new = len(was_b[name].split()), len(now_b[name].split())
+        if new - old >= min_words and new - old >= old * min_frac:
+            grown.setdefault((name, old, new), []).append(el["id"])
+
+    if not grown:
+        return
+    print(f"\nnote  (against {pathlib.Path(prev_path).name})")
+    for (name, old, new), ids in grown.items():
+        print(f"  {name} grew {old} -> {new} words; "
+              f"{', '.join(ids)} unchanged inside it.")
+    print("  Check the additions against docs/prompt-language.md.")
+
+
+def main(intent_path, prompt_path, prev_path=None, thresh=0.34):
     intent = json.load(open(intent_path))
     prompt = open(prompt_path).read()
     ptoks = stems(toks(prompt))
@@ -89,6 +180,8 @@ def main(intent_path, prompt_path, thresh=0.34):
             else:
                 print(f"  [OK ] not asserted: '{bad}'")
 
+    note_growth(intent, prompt, prompt_path, prev_path)
+
     print(f"\nRESULT: {'PASS' if not fails else 'FAIL (' + str(len(fails)) + ')'}")
     for f in fails:
         print("  -", f)
@@ -96,4 +189,4 @@ def main(intent_path, prompt_path, thresh=0.34):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1], sys.argv[2]))
+    sys.exit(main(*sys.argv[1:4]))
