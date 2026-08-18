@@ -81,7 +81,7 @@ This run cannot stop to ask. Where a procedure says to ask, do this instead:
 |---|---|---|
 | `compile.md` §6 | ask when a change contradicts a `required` element's `function` | keep the element, apply the rest of the change, and record the conflict in `report.md` |
 | `face-gen.md` "Steering from the user" | edit the prompt and regenerate on request | accept the first still that clears the inspection checklist; re-roll at most 3 times, then take the best and note it |
-| `generation.md` §6 | whoever called it decides whether to buy another | the loop below decides, against the budget |
+| `generation.md` | whoever called it decides whether to buy another | the loop below decides, against the budget, and only after this take has a `judge.md` verdict |
 | `judge.md` step 4 | ship or not, and which fix | the loop below acts on it without confirming |
 
 Stop only for:
@@ -160,16 +160,22 @@ Follow `compile.md` §7 until it passes.
 
 ## 5. The loop
 
+Generate and judge are a pair. Do not buy the next take, and do not select this
+one, until `judge.md` has returned a verdict on it.
+
 While the balance can cover another take:
 
 1. **Generate** one take per `${CLAUDE_PLUGIN_ROOT}/prompts/generation.md`, with the
    model from **Model** above, into `output/<id>/take.v<n>.t<k>.mp4`. Cost it first and
    check the quote against what is left. What gets attached is §1's decision; tell it
    whether the run is re-casting and let it choose.
-2. **Check the take** per `generation.md` §5–6. Dead → record why and loop. Charge
-   it to the budget like any other.
-3. **Judge** per `${CLAUDE_PLUGIN_ROOT}/prompts/judge.md`, in its order — step 1 is
-   a hard gate. If it stops there, revise the spec and the prompt, and loop.
+2. **Container.** `generation.md` §5. If the file did not land — no video stream,
+   unreadable, nothing to open — record why, charge the credits, and loop. That is
+   not a take, and there is nothing to judge.
+3. **Judge** that file. Follow `${CLAUDE_PLUGIN_ROOT}/prompts/judge.md` in full, in
+   its order, now. Step 1 is a hard gate. If it stops there, revise the spec and the
+   prompt, and loop. Wrong words, a missing element, a cut, a face that looks off —
+   none of those skip this step.
 4. **Act on the verdict**, per `judge.md` step 4:
    - **ships** → done. Run `vg post chain` into `take.v<n>.t<k>.post.mp4`; it is
      free and worth running on a clip that already ships. Re-measure, and keep the
@@ -186,13 +192,14 @@ one; `generation.md` §1 says what to do with a clause that has failed twice.
 Write the revision in the register `${CLAUDE_PLUGIN_ROOT}/docs/prompt-language.md` names.
 
 When a take ships and `vg post chain` is kept, that post file is the delivered clip.
-Otherwise the delivered clip is the shipped take, or the best take if none shipped.
+Otherwise the delivered clip is the shipped take, or the best judged take if none shipped.
 
 ## 6. Select
 
 Rename the delivered clip to `take.v<n>.t<k>.selected.mp4` (same `v` and `t` as
 the take, even if the file you kept is the `.post.` pass). Leave every other take
-as `take.v<n>.t<k>.mp4`. One `.selected.` file, always.
+as `take.v<n>.t<k>.mp4`. One `.selected.` file, always. A take with no `judge.md`
+verdict cannot be it.
 
 ## 7. Report
 

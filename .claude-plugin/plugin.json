@@ -3,7 +3,7 @@
   "name": "video-gen",
   "displayName": "Video Gen",
   "description": "Recreate a short reference video with AI generation — compile it into a spec, cast it, generate, and judge the result honestly — end to end from one command.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "author": {
     "name": "ytcs",
     "url": "https://github.com/reachspan"

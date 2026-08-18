@@ -195,19 +195,13 @@ rather than a bad performance.
 
 ## 6. Report the take back
 
-Judging is not free — it spawns readers and builds artifacts for two clips — so say
-plainly whether this take is worth it. Call it dead only for something flatly checkable:
+Hand back the file path, the model and parameters used, the references attached,
+and what §5 confirmed about the container. That is the whole report.
 
-- the wrong duration, or no audio, or no speech in the audio
-- words that are not the scripted line, or nobody speaking who was supposed to
-- a `required` element that is simply absent, or a person count that is wrong
-- a cut, where the spec says one continuous shot
+Do not grade the picture or the performance. Wrong words, a missing element, a
+cut, a face that looks off — none of those are this file's to call. What a clip
+is worth is `judge.md`'s question, and a first impression is not a cheap version
+of the answer.
 
-That is the whole list. **Do not grade it beyond that**, and do not call a take good
-because it looked good on one watch — what a clip is worth is `judge.md`'s question, and
-a first impression is not a cheap version of the answer.
-
-Hand back the file path, the model and parameters used, the references attached, and
-either "dead, because X" against that list or "checks out". A dead take is worth as much
-as a live one to whoever is deciding what to buy next, but only if the reason survives
-with it.
+If the file did not land — no video stream, unreadable, nothing to open — say so.
+That is not a take.
