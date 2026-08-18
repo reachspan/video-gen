@@ -57,7 +57,9 @@ for src, dst in zip(files, names):
                     "-c:v", "libx264", "-b:v", "2000k", "-pix_fmt", "yuv420p",
                     "-map_metadata", "-1", "-an",
                     f"blind/{dst}", "-y"], check=True)
-json.dump(dict(zip(names, files)), open("blind/KEY.json", "w"))   # do not read yet
+# The key lives OUTSIDE blind/ - readers get shell access to blind/ and must not
+# be able to open the answer sheet, even by accident.
+json.dump(dict(zip(names, files)), open("blind_key.json", "w"))   # do not read yet
 EOF
 ```
 
@@ -71,11 +73,23 @@ Frame rate is deliberately left alone. Conforming it drops or duplicates frames,
 whichever clip got conformed reads judderier for it — a worse leak than the one it
 closes. The shuffle is what protects that axis.
 
+Duration is not left alone, but it is never solved by trimming both clips to the
+shorter file's length. That keeps reference seconds 0–N, which on a long reference
+deletes the payoff the candidate recreates (observed: a 51s reference lost its
+t≈38–48 payoff against a 10s candidate). Cut the reference to a stated in/out
+window chosen for the comparison, and cut it before the block above runs, so what
+gets normalised and shuffled is the excerpt:
+
+    ffmpeg -v error -ss <in> -to <out> -i ref_full.mp4 -c copy ref.mp4
+
+When an intent spec exists the window comes from its `shot.beats`; an external
+grounding record works the same way. Say the window in the report.
+
 The re-encode costs a little grain, which is fine: nothing in steps 1 or 2 reads grain
 magnitude.
 
 Three readings, two clips: spawn **six fresh agents at once**, one reading per clip.
-Open `KEY.json` only when every answer is in.
+Open `blind_key.json` only when every answer is in.
 
 Give a reader nothing but its own prompt and its own file. No spec, no prompt text, no
 conversation, no sight of another reader's answers. A reader told what the shot is
