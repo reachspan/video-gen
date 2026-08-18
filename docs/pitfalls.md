@@ -63,7 +63,10 @@ plainly as a frozen speaker, and is easier to produce by accident.
 ## Tier 2 — Seedance defaults (vendor and practitioner reported)
 
 Where several Tier 1 tells come from. These are the model's behaviour with no
-instruction to the contrary.
+instruction to the contrary. Reported against Seedance before 2.5; not re-measured
+on it. Confirm a default that stops showing up rather than treating it as an
+observation error — each is still cheap to write against, so none is worth dropping
+on a suspicion.
 
 | default | effect here |
 |---|---|

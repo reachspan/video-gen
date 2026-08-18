@@ -63,7 +63,8 @@ def subject_box(A, guard=0.60):
 def measure(path):
     m = {"file": path.split("/")[-1]}
     p = probe(path)
-    m |= {"fps": round(p["fps"], 2), "kbps": p["kbps"]}
+    m |= {"fps": round(p["fps"], 2), "kbps": p["kbps"],
+          "width": p["width"], "height": p["height"]}
 
     n = count(path)
     sidx = spread(n, NSAMPLE)
@@ -299,3 +300,14 @@ if __name__ == "__main__":
             print(f"\nnote: bitrate differs from the reference by more than 2x "
                   f"({', '.join(odd)}).\n      noise_by_luma is not comparable "
                   f"across that gap; noise_luma_slope is.", file=sys.stderr)
+        # displacement_px and motion_mean are pixel counts, so they scale with
+        # frame height. Identical motion at different sizes reports in proportion.
+        base_h = rs[0].get("height") or 0
+        sized = [f"{r['file']} {r['width']}x{r['height']}" for r in rs[1:]
+                 if base_h and r.get("height") and abs(r["height"] - base_h) > 1]
+        if sized:
+            print(f"\nnote: frame size differs from the reference's "
+                  f"{rs[0]['width']}x{rs[0]['height']} ({', '.join(sized)}).\n"
+                  f"      displacement_px and motion_mean are pixel counts and "
+                  f"scale with it; multiply\n      by the height ratio before "
+                  f"reading either as a difference in motion.", file=sys.stderr)

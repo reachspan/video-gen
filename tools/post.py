@@ -138,7 +138,17 @@ def shake(cand, out=None, amp=None, ref=None):
     n, h, w = C.shape[:3]
     if amp is None:
         have = float(np.median(displacement(cand)))
-        want = float(np.median(displacement(ref))) if ref else have
+        want = have
+        if ref:
+            want = float(np.median(displacement(ref)))
+            # Displacement is in pixels, so it scales with frame height.
+            # Differencing the raw figures would apply the reference's shake
+            # in the reference's pixels, not the candidate's.
+            rh = probe(ref)["height"]
+            if abs(rh - h) > 1:
+                want *= h / rh
+                print(f"reference is {rh}px tall, candidate is {h}px; "
+                      f"target rescaled by {h / rh:.3f}")
         amp = max(0.0, want - have)
         print(f"target {want:.3f}px  present {have:.3f}px  adding {amp:.3f}px")
     dx, dy, rot = shake_path(n, fps, amp)

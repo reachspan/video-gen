@@ -61,6 +61,13 @@ covers the whole clip.
 anomalous moment in its own tile. That makes the coverage bounded, repeatable and
 honest about where it looked — not infallible.
 
+**4x is a magnification, not a resolution.** A tile is a fraction of the frame, so
+it carries pixels in proportion to the frame it was cut from. At the same 4x, a
+smaller clip resolves less: on small glyphs, contact shadows and thin strands the
+honest verdict is `cannot_tell` more often. Tiles are read in pairs against the
+reference's — check which frame is smaller before reading a difference as a defect
+in one.
+
 ## No metric here is a detector
 
 Everything `vq.py` measures was calibrated against 14 real 4s segments from six phone
@@ -80,6 +87,15 @@ quality.
 **Absolute values are not portable.** They move with frame count, sampling offset and
 estimator. Pass reference and candidate to one `vq.py measure` run and read the
 comparison; only the direction and the ratio between them carry meaning.
+
+**`displacement_px` and `motion_mean` also move with frame size** — both count
+pixels. Two clips of identical motion at different heights report in proportion
+to those heights, so a difference is not a difference in motion until it has been
+divided by the height ratio. `measure` notes a size mismatch and is silent when
+the sizes match. `post.py shake` applies the ratio itself; nothing else does. A
+size gap also makes `noise_by_luma` incomparable — resampling averages noise away —
+while `noise_luma_slope`, normalised by mean noise, survives it the way it survives
+the encoder.
 
 **`warnings` comes first.** On a fast-moving camera a large share of alignment steps
 get rejected and few background tiles survive the subject mask; the tool says so
@@ -142,7 +158,7 @@ places to look — not as evidence of fakery.
 
 | axis | observed | metric | what closes the gap |
 |---|---|---|---|
-| Camera motion | generated moves *more* than this reference (0.45 vs 0.28px median inter-frame), but real footage spans 0.25–10.8px, so magnitude alone says nothing | `displacement_px`, `motion_mean` | `post.py shake` adds only the deficit, so an already-mobile clip is untouched |
+| Camera motion | generated moves *more* than this reference (0.45 vs 0.28px median inter-frame), but real footage spans 0.25–10.8px, so magnitude alone says nothing. These figures are in the frame's own pixels on a size-matched pair; a mismatched pair needs the height ratio first | `displacement_px`, `motion_mean` | `post.py shake` adds only the deficit, so an already-mobile clip is untouched |
 | Highlight behaviour | generated clips clip less than this reference | `clip_high_pct`, `clip_low_pct` | prompting does not move it and pushing harder moves it the wrong way; `post.py exposure` does |
 | Liveliness | whether the subject ever falls quiet relative to its own typical motion, and how much more it moves than its backdrop | `subject_stillness`, `subject_vs_background` | nothing algorithmic. A subject that goes dead between beats needs regenerating. These aggregates are coarse — the slit-scans are the sensitive instrument, so confirm there first |
 | Grain profile shape | `noise_luma_slope` is near-constant per camera: +0.560 ±0.001 across three unrelated segments of one, negative across every segment of another. It survives a 10x bitrate change with a ~10% shift, because normalising by mean noise cancels what the encoder does. Generated reads +0.38 against a +0.56 reference | `noise_luma_slope`, `noise_by_luma` | `post.py grain`. The metric tests whether two clips share a capture pipeline; it does not test whether either is real |
