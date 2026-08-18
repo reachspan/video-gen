@@ -1,10 +1,11 @@
 Produce a still of a face that reads as a real person. One image, reused unchanged
 for every shot of that character.
 
-Text identity drifts, and beauty bias is worst there: an ordinary fifty-year-old
+Text identity drifts, and beauty bias is worst there: an unspecified fifty-year-old
 comes back as an attractive thirty-two, because the prior for "man" is a good-looking
-man. An image pins the identity and shortens the video prompt, leaving room for
-premise, blocking, performance.
+man. The still is what stops that. It pins a specific person — who may sit anywhere
+on the beauty spectrum — and shortens the video prompt, leaving room for premise,
+blocking, performance.
 
 ## Model
 
@@ -28,28 +29,41 @@ assuming.
 
 ## Writing the prompt
 
-### Fight the beauty prior explicitly
+### Pin a person, not a type
 
-The default output is symmetrical, young, clear-skinned and well-proportioned.
-Ordinary faces are none of those things. Name the specific irregularities you want —
-a general instruction to "look ordinary" will not survive:
+The default output is a type: symmetrical, young, clear-skinned, well-proportioned.
+Real faces sit anywhere on the beauty spectrum. The prior to fight is the type and
+the finish, not attractiveness. A good-looking twenty-eight-year-old with visible
+pores is a success. A weathered fifty-year-old retouched into a handsome thirty-two
+is a failure. A catalogue of defects — a broken nose, a chipped tooth, a heavy
+build — on every face is the same type, inverted.
 
-- **Asymmetry.** One eye slightly lower or smaller, a nose broken and set a little
-  off, an uneven smile, one ear higher.
-- **Skin as a surface, not a finish.** Visible pores, broken capillaries across the
-  nose and cheeks, blackheads, sun damage, uneven tone, razor rash, a shine of sweat.
-  Say **no beauty retouch, no skin smoothing, no airbrushing, no plastic sheen.**
-- **Age where age actually shows.** Neck and hands age before faces. Ask for a
-  slackening jawline, under-eye bags, deep nasolabial folds, thinning or receding
-  hair, grey stubble growing in unevenly, sun-damaged forearms.
-- **Teeth.** The default is a bright even set. Ask for slight crowding, uneven
-  colour, a chip, some wear.
-- **Build.** "Heavy build, thick neck, sloping shoulders" — the default body is
-  athletic regardless of the face.
+Write from the brief. If the spec names an age, a life and a build, those are the
+constraints. If it does not, pick a specific person — one age, one life, one build,
+one place on the beauty spectrum — and stay there. Do not default to weathered or
+to handsome.
+
+What has to be written, because the model will not do it unasked:
+
+- **Skin as a surface, not a finish.** Visible pores, natural texture, a living
+  sheen. Say **no beauty retouch, no skin smoothing, no airbrushing, no plastic
+  sheen.** Do not pile on blackheads, broken capillaries or razor rash unless the
+  brief's life would produce them.
+- **Age as stated.** Match the age you asked for. Neck and hands age before faces,
+  so if the brief is fifty, ask for that. Do not add a slackening jawline,
+  under-eye bags or grey stubble to a face whose age would not show them.
+- **Features from this person, not from a list.** Slight natural asymmetry is
+  photographic and fine to mention as a quality of the picture. A broken nose, an
+  uneven smile, a chipped tooth, a heavy build — only if this character has them.
+- **Build.** The default body is athletic. If the brief is silent, pick an
+  unremarkable civilian build, not an athletic one and not a heavy one.
+- **Teeth.** The default is a bright even set. Unremarkable real teeth — slight
+  unevenness of colour or alignment — unless the brief asks for more.
 
 State an occupation and a life, not just a look. "A man who has laid cable for
-twenty-five years" pulls weathering, build and posture together more reliably than
-listing them.
+twenty-five years" and "a woman who presents the weather on regional television"
+each pull a different face. The life is how you choose a point on the spectrum,
+not a reason to weather every face.
 
 ### Make it usable as a reference
 
@@ -75,9 +89,11 @@ Open every candidate as a tight crop upscaled 4x (`docs/evidence.md`).
 
 Check, in this order:
 
-1. **Did the beauty prior win?** Compare against the age and life you asked for. If
-   the face looks like a model playing the part rather than someone who has lived
-   it, reject it. This is the failure that survives everything downstream.
+1. **Did a type win?** Compare against the age, life and looks you asked for.
+   Two failures: the face is younger or smoother than the brief (airbrushed, even
+   if the features are right), or it is a pile of irregularities the brief did
+   not ask for. A good-looking face with visible pores is a pass. Either type
+   survives everything downstream.
 2. **Eyes.** Pupils round and matched, gaze on axis, catchlights consistent with one
    flat source.
 3. **Teeth and mouth**, at 4x.
