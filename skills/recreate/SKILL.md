@@ -60,9 +60,9 @@ substitution in `report.md`. Keep going.
 
 `face-gen.md` picks its own image model; this default is for video only.
 
-Resolution is `generation.md` §3's, not this file's — but it works the same way: a
-resolution the user names in the instruction wins outright, exactly as a named model
-does, and the run prices it against the budget rather than talking them down.
+Resolution lives in `generation.md` §3, and it works the same way as the model: a
+resolution the user names in the instruction wins outright, and the run prices it
+against the budget rather than talking them down.
 
 ## Casting
 

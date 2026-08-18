@@ -63,15 +63,15 @@ is on the do-not-chase list in `docs/pitfalls.md`; do not add it here either.
 **Rolling-shutter shear** (stage 3, after shake): derive it from the *same*
 trajectory that drives the shake — `shx(t) = C · dx/dt` on horizontal velocity —
 because shear uncorrelated with camera motion is worse than no shear. Keep peak
-`|shx|` in 0.002–0.008 — a fraction of frame width, so the range carries across
-resolutions unchanged and is the number to keep; the pixel figure it buys does not. At
-720×1280, 0.006 displaces the top and bottom rows about ±4px, and proportionally less
-on a shorter frame. Modern phones correct rolling shutter in the ISP, so a real 2026
-capture has *less* skew than a naive CMOS model predicts.
+`|shx|` in 0.002–0.008 — a fraction of frame width, so the range is the same at any
+resolution; the pixel figure it buys is not. At 720×1280, 0.006 displaces the top
+and bottom rows about ±4px, and proportionally less on a shorter frame. Modern
+phones correct rolling shutter in the ISP, so a real 2026 capture has *less* skew
+than a naive CMOS model predicts.
 
 **Motion blur** (stage 4): interpolate up, average, decimate — that synthesises true
 vector blur rather than a directionless smear. At the 24 fps Seedance has delivered, a
-180° shutter is 1/48s, so use `fps=96` with `tmix=frames=2` — read the rate off the
+180° shutter is 1/48s, so use `fps=96` with `tmix=frames=2`. Read the rate off the
 take with `ffprobe` first and rescale both numbers if it differs:
 
     minterpolate=fps=96:mi_mode=mci:mc_mode=aobmc:vsbmc=1,tmix=frames=2,fps=24
@@ -104,11 +104,11 @@ fraction of a pixel, and a fixed constant overshoots badly — `post.py shake` p
 the target, what is already present, and the difference it is adding, so the numbers
 are visible before the clip is written.
 
-Displacement is counted in pixels, so a reference taller than the candidate carries a
-larger target for the same motion, and a shorter one a smaller target. The two rarely
-match — the take is generated at whatever resolution `generation.md` §3 settled on and
-the reference arrives at whatever the platform delivered. `post.py shake` divides by
-the height ratio and prints when it does; anything built by hand has to do the same.
+Displacement is in pixels, so a taller reference carries a larger target for the
+same motion, and a shorter one a smaller target. The two rarely match: the take
+is whatever `generation.md` §3 chose, the reference whatever the platform delivered.
+`post.py shake` divides by the height ratio and says so when it does; anything
+built by hand has to do the same.
 
 Shake crops: the warp is done on a padded frame and the padding is cut off, so the
 output is slightly smaller than the input. Conform sizes before splicing anything.

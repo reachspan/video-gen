@@ -109,10 +109,9 @@ Read durations, aspect ratios, resolutions, reference caps and modes from `model
 
 **`mode` is not always a speed control.** On Seedance 2.5 it selects what the call
 does — `t2v`, `omni_reference`, `video_edit`, `video_extension` — and `t2v` refuses
-reference media outright, so a run that attaches anything has to pass `--mode
-omni_reference`. On Seedance 2.0 the same flag chose between `std` and `fast`. Read
-which it is before writing the call: an identity image refused by the mode is a take
-that comes back with the wrong person in it.
+reference media, so a run that attaches anything has to pass `--mode omni_reference`.
+On Seedance 2.0 the same flag chose `std` or `fast`. Read which it is before writing
+the call: an identity image refused by the mode comes back as the wrong person.
 
 Settings this format wants:
 
@@ -120,21 +119,19 @@ Settings this format wants:
   where the budget is set, not a limit. Priced at 8s on `seedance_2_5`: 20 credits at
   480p against 52 at 720p — two and a half times the takes for the same money, on a
   format whose planning number is a 64:1 reject ratio (`docs/pitfalls.md`). Re-price
-  it rather than trusting those figures (`AGENT.md`).
-- **A resolution the user names wins outright**, exactly as a named model does
-  (`SKILL.md`). "Do it at 1080p", "720p please", a number in the prose: take it, price
-  it against the budget, and do not argue it back down.
+  rather than trusting those figures (`AGENT.md`).
+- **A resolution the user names wins outright**, the same way a named model does
+  (`SKILL.md`). "Do it at 1080p", "720p please", a number in the prose: take it,
+  price it against the budget, and do not talk them down.
 - **Go up unasked when the shot turns on something small** — a wordmark, a contact
-  shadow, a thin strand — and record the choice and what prompted it in `report.md`.
-- **Know what the default costs, because it is a real trade.** The delivery this is
-  aimed at carries 720×1280 (`docs/pitfalls.md`), so anything below that is upscaled
-  at ingest rather than downscaled into it: detail is given up, not merely spent where
-  the re-encode would have destroyed it anyway. Inspection pays too — `judge.md` reads
-  4x tiles cut from the frame, so a smaller frame hands every sweep agent a
-  proportionally smaller tile, and more `cannot_tell` on `T6`, `T7` and `T9` is the
-  cost of the cheaper roll rather than a clean sweep. Above 720p the trade reverses:
-  the re-encode destroys the extra detail on the way out, so the higher price buys
-  something the viewer never sees.
+  shadow, a thin strand — and record the choice and why in `report.md`.
+- **The default is a real trade.** Delivery is 720×1280 (`docs/pitfalls.md`), so
+  anything below that is upscaled at ingest: detail is given up, not just spent
+  where the re-encode would have destroyed it. Inspection pays too — `judge.md`
+  reads 4x tiles cut from the frame, so a smaller frame means a smaller tile, and
+  more `cannot_tell` on `T6`, `T7` and `T9` is the cost of the cheaper roll, not a
+  clean sweep. Above 720p the trade reverses: the re-encode destroys the extra
+  detail, so the higher price buys something the viewer never sees.
 - **Longer than the finished clip.** Quality falls off at the tail (`T8`), so ask for a
   couple of seconds of overhead and cut the end off. It is cheaper than re-rolling a
   good take that died in its last second.
@@ -145,9 +142,9 @@ Settings this format wants:
 ## 4. Make the call
 
 Cost it first. `generate cost` takes the same flags as `generate create`, so price the
-call you are about to make rather than a simplified version of it. Pass the mode and
-the references too: `omni_reference` is refused outright without at least one
-reference, so a stripped-down quote does not just misprice the call, it fails.
+call you are about to make, not a simplified version. Pass the mode and the
+references too: `omni_reference` is refused without at least one reference, so a
+stripped-down quote does not just misprice the call, it fails.
 
     higgsfield generate cost seedance_2_5 \
       --prompt "$(cat output/<id>/prompt.v2.txt)" \
@@ -163,14 +160,14 @@ reference, so a stripped-down quote does not just misprice the call, it fails.
       --mode omni_reference \
       --duration 8 --resolution 480p --aspect_ratio 9:16 --wait
 
-The model, the resolution and the mode above are the defaults §3 settles; substitute
-what §3 actually chose for this run. Add `--video-references output/<id>/seg.mp4` if
-§1 says this run wants it. Drop `--mode omni_reference` only if nothing is attached at
-all, which on this pipeline means no main character — §1 says that does not happen.
+The model, resolution and mode above are the §3 defaults; substitute what §3 chose
+for this run. Add `--video-references output/<id>/seg.mp4` if §1 says this run wants
+it. Drop `--mode omni_reference` only if nothing is attached — on this pipeline that
+means no main character, which §1 says does not happen.
 
-**Whatever resolution this call used, every later step has to know it.** Record it
-with the take (§6). `judge.md` normalises the blind pair against it, `post.md` scales
-its shake target by it, and both go wrong quietly if they assume the default.
+**Record the resolution this call used with the take (§6).** Later steps need the
+actual size — `judge.md` for the blind pair, `post.md` for the shake target — and
+both go wrong quietly if they assume the default.
 
 `--wait` blocks until the job lands and prints the result URL. Without it the call
 returns a job id straight away, and `higgsfield generate wait <id>` picks it back up.

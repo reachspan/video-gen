@@ -300,9 +300,8 @@ if __name__ == "__main__":
             print(f"\nnote: bitrate differs from the reference by more than 2x "
                   f"({', '.join(odd)}).\n      noise_by_luma is not comparable "
                   f"across that gap; noise_luma_slope is.", file=sys.stderr)
-        # displacement_px and motion_mean are counted in pixels, so they scale
-        # with frame height. Two clips of identical motion at different frame
-        # sizes report in proportion to those sizes, either way round.
+        # displacement_px and motion_mean are pixel counts, so they scale with
+        # frame height. Identical motion at different sizes reports in proportion.
         base_h = rs[0].get("height") or 0
         sized = [f"{r['file']} {r['width']}x{r['height']}" for r in rs[1:]
                  if base_h and r.get("height") and abs(r["height"] - base_h) > 1]

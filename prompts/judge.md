@@ -31,11 +31,10 @@ Steps 1 and 2 run on the same two files, so prepare them once.
 
 **Normalise before shuffling.** A raw generator output and a platform-delivered
 reference differ several-fold in bitrate and file size, and they usually differ in
-frame size too, in whichever direction `generation.md` §3 settled on. These readers are
-told to run `ffmpeg`, so `ls` or `ffprobe` hands them the answer and the control stops
-being a control. Re-encode both to one bitrate and one frame size, and strip metadata.
-The script reads the sizes rather than assuming them, so it is correct whichever way
-round they fall — and correct when they already match, which is when it does nothing:
+frame size too. These readers are told to run `ffmpeg`, so `ls` or `ffprobe` hands
+them the answer and the control stops being a control. Re-encode both to one bitrate
+and one frame size, and strip metadata. The script reads the sizes rather than
+assuming them, so it is correct either way round, and a no-op when they already match:
 
 ```bash
 python3 - <<'EOF'
@@ -62,12 +61,11 @@ json.dump(dict(zip(names, files)), open("blind/KEY.json", "w"))   # do not read 
 EOF
 ```
 
-**Down to the smaller, never up.** Upscaling to meet the larger clip gives whichever
-one got upscaled a softness the other does not have, and that is a tell handed to the
-skeptic for free. Downscaling the larger one costs it detail it had, which is the
-lesser harm: the pair is being read for meaning and for whether it looks filmed, and
-neither reading needs the detail. Step 3 reads the takes themselves at full size, so
-nothing is lost there.
+**Down to the smaller, never up.** Upscaling the smaller clip gives it a softness
+the other does not have — a tell handed to the skeptic for free. Downscaling the
+larger one costs it detail, which is the lesser harm: steps 1 and 2 read for meaning
+and for whether it looks filmed, and neither needs the detail. Step 3 reads the
+takes themselves at full size, so nothing is lost there.
 
 Frame rate is deliberately left alone. Conforming it drops or duplicates frames, and
 whichever clip got conformed reads judderier for it — a worse leak than the one it
@@ -100,8 +98,8 @@ Between them they cover `S1`–`S5`.
 > you will invent defects that are not there. For anything involving hands, faces,
 > text or small objects, crop a tight region and upscale it before looking:
 > `ffmpeg -ss 2 -i clip.mp4 -vf "crop=250:290:30:400,scale=1000:1160" -frames:v 1 r.jpg`
-> The offsets are an example. Read the frame size off the clip and put the crop on
-> what you are actually looking at; scale to 4x whatever you cropped.
+> The offsets are an example. Read the frame size off the clip, crop what you are
+> looking at, and scale that crop to 4x.
 > If you cannot resolve a detail at 4x, say "cannot tell" rather than reporting it.
 >
 > 1. What is physically happening in this shot?
@@ -145,8 +143,8 @@ domain from the video, then critique from inside that domain.
 > Inspect at magnification before reporting any detail of an object, logo or text —
 > a whole frame arrives downsampled and you will invent faults that are not there:
 > `ffmpeg -ss 2 -i clip.mp4 -vf "crop=250:290:30:400,scale=1000:1160" -frames:v 1 r.jpg`
-> The offsets are an example. Read the frame size off the clip and put the crop on
-> what you are actually looking at; scale to 4x whatever you cropped.
+> The offsets are an example. Read the frame size off the clip, crop what you are
+> looking at, and scale that crop to 4x.
 > If you cannot resolve it at 4x, say "cannot tell" instead of reporting it.
 >
 > Rate each issue 1-5, where 5 = a practitioner would immediately know this was staged
