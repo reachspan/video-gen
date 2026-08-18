@@ -16,8 +16,10 @@ CENTRES = np.array([(lo + hi) / 2 for lo, hi in BANDS], float)
 
 def probe(path):
     with av.open(path) as c:
-        return {"fps": float(c.streams.video[0].average_rate),
-                "kbps": round((c.bit_rate or 0) / 1000)}
+        v = c.streams.video[0]
+        return {"fps": float(v.average_rate),
+                "kbps": round((c.bit_rate or 0) / 1000),
+                "width": int(v.width), "height": int(v.height)}
 
 
 def read(path, n=None):

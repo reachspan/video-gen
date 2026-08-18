@@ -59,8 +59,10 @@ without stopping to ask** — interrupt it if you want it steered. Defaults:
 
 - **150 Higgsfield credits**, then it stops and reports. Everything billed counts —
   takes, patches and casting stills alike. `--max-credits N` to change it.
-- **Seedance 2.0** for video. `--model NAME` for anything else in `higgsfield model
-  list --video`.
+- **Seedance 2.5 at 480p, 9:16** for video — 480p is where the budget is set, not a
+  ceiling. `--model NAME` for anything else in `higgsfield model list --video`, and ask
+  for a resolution in the instruction ("do it at 720p") to override that; whatever the
+  model offers is available, and a resolution you name is taken as given.
 - **Every main character is recast** with a generated face, unless you say otherwise.
 - **Everything lands in `output/<id>/`.** The delivered take is
   `take.v<n>.t<k>.selected.mp4`. `targets/` holds the original reference and

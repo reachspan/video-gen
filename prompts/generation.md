@@ -103,17 +103,38 @@ the crop.
 
     higgsfield model list --video
     higgsfield model get <model>
-    higgsfield generate cost <model> --prompt "$(cat output/<id>/prompt.v2.txt)" \
-      --duration 8 --resolution 720p
 
-Read durations, aspect ratios, resolutions, reference caps and speed modes from
-`model get` (`AGENT.md`).
+Read durations, aspect ratios, resolutions, reference caps and modes from `model get`
+(`AGENT.md`).
+
+**`mode` is not always a speed control.** On Seedance 2.5 it selects what the call
+does — `t2v`, `omni_reference`, `video_edit`, `video_extension` — and `t2v` refuses
+reference media outright, so a run that attaches anything has to pass `--mode
+omni_reference`. On Seedance 2.0 the same flag chose between `std` and `fast`. Read
+which it is before writing the call: an identity image refused by the mode is a take
+that comes back with the wrong person in it.
 
 Settings this format wants:
 
-- **9:16**, and 720p unless there is a reason. The delivery this is aimed at sits near
-  0.036 bits/pixel after the platform re-encode (`docs/pitfalls.md`); resolution beyond
-  720p buys detail that the delivery destroys, at a higher price.
+- **9:16, and 480p by default.** Whatever `model get` offers is available; 480p is
+  where the budget is set, not a limit. Priced at 8s on `seedance_2_5`: 20 credits at
+  480p against 52 at 720p — two and a half times the takes for the same money, on a
+  format whose planning number is a 64:1 reject ratio (`docs/pitfalls.md`). Re-price
+  it rather than trusting those figures (`AGENT.md`).
+- **A resolution the user names wins outright**, exactly as a named model does
+  (`SKILL.md`). "Do it at 1080p", "720p please", a number in the prose: take it, price
+  it against the budget, and do not argue it back down.
+- **Go up unasked when the shot turns on something small** — a wordmark, a contact
+  shadow, a thin strand — and record the choice and what prompted it in `report.md`.
+- **Know what the default costs, because it is a real trade.** The delivery this is
+  aimed at carries 720×1280 (`docs/pitfalls.md`), so anything below that is upscaled
+  at ingest rather than downscaled into it: detail is given up, not merely spent where
+  the re-encode would have destroyed it anyway. Inspection pays too — `judge.md` reads
+  4x tiles cut from the frame, so a smaller frame hands every sweep agent a
+  proportionally smaller tile, and more `cannot_tell` on `T6`, `T7` and `T9` is the
+  cost of the cheaper roll rather than a clean sweep. Above 720p the trade reverses:
+  the re-encode destroys the extra detail on the way out, so the higher price buys
+  something the viewer never sees.
 - **Longer than the finished clip.** Quality falls off at the tail (`T8`), so ask for a
   couple of seconds of overhead and cut the end off. It is cheaper than re-rolling a
   good take that died in its last second.
@@ -124,15 +145,32 @@ Settings this format wants:
 ## 4. Make the call
 
 Cost it first. `generate cost` takes the same flags as `generate create`, so price the
-call you are about to make rather than a simplified version of it.
+call you are about to make rather than a simplified version of it. Pass the mode and
+the references too: `omni_reference` is refused outright without at least one
+reference, so a stripped-down quote does not just misprice the call, it fails.
 
-    higgsfield generate create <model> \
+    higgsfield generate cost seedance_2_5 \
       --prompt "$(cat output/<id>/prompt.v2.txt)" \
       --image-references output/<id>/ref.man.png \
       --image-references output/<id>/ref.drill.png \
-      --duration 8 --resolution 720p --aspect_ratio 9:16 --wait
+      --mode omni_reference \
+      --duration 8 --resolution 480p --aspect_ratio 9:16
 
-Add `--video-references output/<id>/seg.mp4` if §1 says this run wants it.
+    higgsfield generate create seedance_2_5 \
+      --prompt "$(cat output/<id>/prompt.v2.txt)" \
+      --image-references output/<id>/ref.man.png \
+      --image-references output/<id>/ref.drill.png \
+      --mode omni_reference \
+      --duration 8 --resolution 480p --aspect_ratio 9:16 --wait
+
+The model, the resolution and the mode above are the defaults §3 settles; substitute
+what §3 actually chose for this run. Add `--video-references output/<id>/seg.mp4` if
+§1 says this run wants it. Drop `--mode omni_reference` only if nothing is attached at
+all, which on this pipeline means no main character — §1 says that does not happen.
+
+**Whatever resolution this call used, every later step has to know it.** Record it
+with the take (§6). `judge.md` normalises the blind pair against it, `post.md` scales
+its shake target by it, and both go wrong quietly if they assume the default.
 
 `--wait` blocks until the job lands and prints the result URL. Without it the call
 returns a job id straight away, and `higgsfield generate wait <id>` picks it back up.

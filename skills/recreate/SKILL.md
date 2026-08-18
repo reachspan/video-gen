@@ -45,7 +45,7 @@ have tried next.
 
 ## Model
 
-**Seedance 2.0 (`seedance_2_0`) for video, unless the user names another** —
+**Seedance 2.5 (`seedance_2_5`) for video, unless the user names another** —
 `--model NAME`, or "use Kling", or any other model named in the instruction. A named
 model wins outright; do not second-guess it or fall back when it costs more.
 
@@ -59,6 +59,10 @@ If the named model does not exist, or `model get` shows it will not take what
 substitution in `report.md`. Keep going.
 
 `face-gen.md` picks its own image model; this default is for video only.
+
+Resolution is `generation.md` §3's, not this file's — but it works the same way: a
+resolution the user names in the instruction wins outright, exactly as a named model
+does, and the run prices it against the budget rather than talking them down.
 
 ## Casting
 

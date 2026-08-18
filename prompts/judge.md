@@ -30,25 +30,48 @@ and misses more.
 Steps 1 and 2 run on the same two files, so prepare them once.
 
 **Normalise before shuffling.** A raw generator output and a platform-delivered
-reference differ several-fold in bitrate and file size, and these readers are told to
-run `ffmpeg` — so `ls` or `ffprobe` hands them the answer and the control stops being
-a control. Re-encode both to one bitrate and strip metadata:
+reference differ several-fold in bitrate and file size, and they usually differ in
+frame size too, in whichever direction `generation.md` §3 settled on. These readers are
+told to run `ffmpeg`, so `ls` or `ffprobe` hands them the answer and the control stops
+being a control. Re-encode both to one bitrate and one frame size, and strip metadata.
+The script reads the sizes rather than assuming them, so it is correct whichever way
+round they fall — and correct when they already match, which is when it does nothing:
 
 ```bash
 python3 - <<'EOF'
 import random, json, subprocess, pathlib
 files = ["ref.mp4", "out.mp4"]                    # extend as needed
 names = ["clip_a.mp4", "clip_b.mp4"]
+
+def height(p):
+    out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0",
+                          "-show_entries", "stream=height", "-of", "csv=p=0", p],
+                         capture_output=True, text=True, check=True)
+    return int(out.stdout.strip())
+
+H = min(height(f) for f in files)          # down to the smallest; never upscale
 random.shuffle(files)
 pathlib.Path("blind").mkdir(exist_ok=True)
 for src, dst in zip(files, names):
     subprocess.run(["ffmpeg", "-v", "error", "-i", src,
+                    "-vf", f"scale=-2:{H}:flags=lanczos",
                     "-c:v", "libx264", "-b:v", "2000k", "-pix_fmt", "yuv420p",
                     "-map_metadata", "-1", "-an",
                     f"blind/{dst}", "-y"], check=True)
 json.dump(dict(zip(names, files)), open("blind/KEY.json", "w"))   # do not read yet
 EOF
 ```
+
+**Down to the smaller, never up.** Upscaling to meet the larger clip gives whichever
+one got upscaled a softness the other does not have, and that is a tell handed to the
+skeptic for free. Downscaling the larger one costs it detail it had, which is the
+lesser harm: the pair is being read for meaning and for whether it looks filmed, and
+neither reading needs the detail. Step 3 reads the takes themselves at full size, so
+nothing is lost there.
+
+Frame rate is deliberately left alone. Conforming it drops or duplicates frames, and
+whichever clip got conformed reads judderier for it — a worse leak than the one it
+closes. The shuffle is what protects that axis.
 
 The re-encode costs a little grain, which is fine: nothing in steps 1 or 2 reads grain
 magnitude.
@@ -76,7 +99,9 @@ Between them they cover `S1`–`S5`.
 > Inspect at magnification. A whole frame arrives downsampled in your context and
 > you will invent defects that are not there. For anything involving hands, faces,
 > text or small objects, crop a tight region and upscale it before looking:
-> `ffmpeg -ss 2 -i clip.mp4 -vf "crop=250:290:30:640,scale=1000:1160" -frames:v 1 r.jpg`
+> `ffmpeg -ss 2 -i clip.mp4 -vf "crop=250:290:30:400,scale=1000:1160" -frames:v 1 r.jpg`
+> The offsets are an example. Read the frame size off the clip and put the crop on
+> what you are actually looking at; scale to 4x whatever you cropped.
 > If you cannot resolve a detail at 4x, say "cannot tell" rather than reporting it.
 >
 > 1. What is physically happening in this shot?
@@ -119,7 +144,9 @@ domain from the video, then critique from inside that domain.
 >
 > Inspect at magnification before reporting any detail of an object, logo or text —
 > a whole frame arrives downsampled and you will invent faults that are not there:
-> `ffmpeg -ss 2 -i clip.mp4 -vf "crop=250:290:30:640,scale=1000:1160" -frames:v 1 r.jpg`
+> `ffmpeg -ss 2 -i clip.mp4 -vf "crop=250:290:30:400,scale=1000:1160" -frames:v 1 r.jpg`
+> The offsets are an example. Read the frame size off the clip and put the crop on
+> what you are actually looking at; scale to 4x whatever you cropped.
 > If you cannot resolve it at 4x, say "cannot tell" instead of reporting it.
 >
 > Rate each issue 1-5, where 5 = a practitioner would immediately know this was staged

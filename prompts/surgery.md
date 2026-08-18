@@ -11,7 +11,8 @@ re-rolls only the span that is not.
 A patch costs a fixed minimum duration; a full regen scales with clip length.
 Patching wins on longer clips and loses on short ones. Price both:
 
-    higgsfield generate cost <model> --prompt "x" --duration <n> --resolution 720p
+    higgsfield generate cost <model> --prompt "x" --duration <n> \
+      --resolution <the parent clip's>
 
 If the clip is short and the defect is everywhere, regenerate. If the clip is long
 and the defect is a second of it, patch.
@@ -68,11 +69,13 @@ Negatives inline. Write the patch in the register `docs/prompt-language.md` name
 ## 4. Generate
 
 `generation.md` owns the call — model checks, costing, batching, collection. A patch
-changes four things about it.
+changes five things about it.
 
 **Anchor frames.** Use a model that accepts a start frame **and** an end frame, and
 confirm which modes expose them: anchors have been restricted to a specific reference
-mode rather than being available in plain text-to-video.
+mode rather than being available in plain text-to-video. On `seedance_2_5` that mode is
+`omni_reference`; confirm it rather than assuming, since the mode axis differs between
+models (`generation.md` §3).
 
     higgsfield model get <model>
 
@@ -80,7 +83,13 @@ mode rather than being available in plain text-to-video.
       --mode <the mode that accepts anchors> \
       --prompt "$(cat patch.txt)" \
       --start-image a.png --end-image b.png \
-      --duration <minimum> --resolution 720p --aspect_ratio 9:16 --wait
+      --duration <minimum> --resolution <the parent clip's> --aspect_ratio 9:16 --wait
+
+**The parent clip's resolution, not the run's default.** Read it off the take with
+`ffprobe` rather than assuming, since a take may have been generated above the default
+(`generation.md` §3). A patch at a different size has to be rescaled to splice, and a
+rescale is a resample — it costs sharpness on exactly the span that was regenerated to
+fix something.
 
 **Audio off** if it defaults on. The patch would otherwise arrive with its own invented
 audio and you would be splicing an audio seam as well as a picture one; keep the parent
@@ -114,8 +123,9 @@ match its neighbours out of the box.
 
     vg post exposure out.mp4 patch.mp4 patch_graded.mp4
 
-Conform frame rate before splicing if it differs (Seedance output is 24fps). Cut on
-the anchor frames so each anchor appears once.
+Conform frame rate before splicing if it differs — Seedance has delivered 24fps, but
+read it off both files rather than assuming. Cut on the anchor frames so each anchor
+appears once.
 
 ## 7. Re-judge the whole clip
 
