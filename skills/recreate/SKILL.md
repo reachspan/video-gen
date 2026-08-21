@@ -31,7 +31,8 @@ spent its credits. Free and never counted: the gate, `post.py`, a prop photograp
 (`prop-ref.md`), and every `judge.md` inspection.
 
 Price each call with `generate cost` using the same flags as the create
-(`generation.md` §3; prices: `AGENT.md`):
+(`generation.md` §3). **Prices and model names change** — ask the CLI rather than
+trusting a number written down anywhere, including in these files:
 
     higgsfield generate cost <model> --prompt "$(cat output/<id>/prompt.v2.txt)" \
       <the same flags the call will use, per generation.md §3>
@@ -128,8 +129,23 @@ For any other kind of page, use whatever downloader is on the system; `yt-dlp -o
 second of the two stopping conditions.
 
 **`targets/` holds the original and nothing else.** Every file the run produces goes
-under `output/<id>/`, laid out as `AGENT.md` describes. Never write a spec, a prompt, a
-still or a take into `targets/`.
+under `output/<id>/`. Never write a spec, a prompt, a still or a take into `targets/`;
+keeping them apart is what lets a run be thrown away and repeated without fetching
+anything again. Inside `output/<id>/`:
+
+    spec.json                      the intent spec                   compile.md
+    prompt.v<n>.txt                each prompt revision              compile.md
+    ref.<name>.png                 one identity still or prop photo  face-gen.md / prop-ref.md
+    ref.<name>.source.txt          where a sourced photograph came from  prop-ref.md
+    seg.mp4                        the reference segment, if one was cut
+    take.v<n>.t<k>.mp4             the takes                         generation.md
+    take.v<n>.t<k>.selected.mp4    the delivered take                §6
+    measure.json plan.md           the evidence                      judge.md
+    sweep/ sweep_ref/              the artifacts, candidate and control  judge.md
+    blind/                         the shuffled pair and its key     judge.md
+    report.md                      the decision, and what went unresolved
+
+Both directories are gitignored: working state, not published output.
 
 Confirm what landed before compiling it:
 

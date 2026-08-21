@@ -105,7 +105,7 @@ the crop.
     higgsfield model get <model>
 
 Read durations, aspect ratios, resolutions, reference caps and modes from `model get`
-(`AGENT.md`).
+rather than from anything written down here — they change.
 
 **`mode` is not always a speed control.** On Seedance 2.5 it selects what the call
 does — `t2v`, `omni_reference`, `video_edit`, `video_extension` — and `t2v` refuses
@@ -119,7 +119,7 @@ Settings this format wants:
   where the budget is set, not a limit. Priced at 8s on `seedance_2_5`: 20 credits at
   480p against 52 at 720p — two and a half times the takes for the same money, on a
   format whose planning number is a 64:1 reject ratio (`docs/pitfalls.md`). Re-price
-  rather than trusting those figures (`AGENT.md`).
+  with `generate cost` rather than trusting those figures.
 - **A resolution the user names wins outright**, the same way a named model does
   (`SKILL.md`). "Do it at 1080p", "720p please", a number in the prose: take it,
   price it against the budget, and do not talk them down.
