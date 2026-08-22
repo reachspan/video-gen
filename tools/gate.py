@@ -127,8 +127,16 @@ def note_growth(intent, prompt, prompt_path, prev_path, min_words=25, min_frac=0
 def main(intent_path, prompt_path, prev_path=None, thresh=0.34):
     intent = json.load(open(intent_path))
     prompt = open(prompt_path).read()
-    ptoks = stems(toks(prompt))
     fails = []
+
+    # Coverage is window-scoped, not document-wide: an element counts only if
+    # its tokens co-occur within one sentence or a pair of adjacent sentences.
+    # Document-wide matching let stems scattered through unrelated paragraphs
+    # cover a deleted element - the exact failure this gate exists to catch.
+    g1_sents = [stems(toks(s))
+                for s in re.split(r"[.\n]", re.sub(r"\s+", " ", prompt.lower()))
+                if s.strip()]
+    g1_windows = g1_sents + [a | b for a, b in zip(g1_sents, g1_sents[1:])]
 
     print(f"== {prompt_path.split('/')[-1]} ==")
     print("\nG1 element coverage")
@@ -136,7 +144,7 @@ def main(intent_path, prompt_path, prev_path=None, thresh=0.34):
         if el["necessity"] != "required":
             continue
         want = stems(toks(el["what"]))
-        hit = want & ptoks
+        hit = max(g1_windows, key=lambda w: len(want & w), default=set()) & want
         cov = len(hit) / max(len(want), 1)
         ok = cov >= thresh
         print(f"  [{'OK ' if ok else 'MISS'}] {el['id']:<20} coverage {cov:.0%}")
@@ -150,13 +158,67 @@ def main(intent_path, prompt_path, prev_path=None, thresh=0.34):
     # tokens from unrelated clauses, and a noisy gate gets ignored.
     sents = [s for s in re.split(r"[.\n]", re.sub(r"\s+", " ", prompt.lower())) if s.strip()]
 
+    # A prompt that says "never relaxed" is not asserting "relaxed", and one that
+    # says "both coworkers fully in frame" is not asserting "only one person in
+    # frame". Bag-of-stems cannot see either, so it reported both as violations
+    # of the shipped prompt -- and a gate that fails correct prompts is a gate
+    # nobody runs, which is indistinguishable from having no gate.
+    # Words whose removal by toks() inverts or rescopes a phrase.
+    QUANTIFIERS = {"only", "one", "two", "three", "no", "not", "never", "all",
+                   "both", "each", "every", "single", "any", "none", "sole",
+                   "just", "solely", "alone"}
+
+    NEGATORS = {"never", "not", "no", "nobody", "none", "without", "nothing",
+                "neither", "nor", "cannot", "isn", "aren", "doesn", "don",
+                "won", "avoid", "rather"}
+
+    def negated(sentence, matched):
+        """True if a negator governs the matched stems in this sentence.
+
+        Scoped rather than sentence-wide: a negator six words away from the
+        match usually governs something else. The window is generous because
+        English puts "never" well before what it negates, and forward-only for
+        the same reason - the negator precedes its target, so a word sitting at
+        the match position is the match itself, not a negation of it. Words
+        belonging to the matched phrase are ignored as negators on that same
+        ground.
+        """
+        words = re.findall(r"[a-z]+", sentence.lower())
+        positions = [i for i, w in enumerate(words) if stem(w) in matched]
+        # A word that belongs to the matched phrase cannot negate it - "avoid"
+        # inside "avoid eye contact" is the assertion itself.
+        for i, w in enumerate(words):
+            if w not in NEGATORS or stem(w) in matched:
+                continue
+            if any(1 <= pos - i <= 6 for pos in positions):
+                return True
+        return False
+
     def asserted(phrase, need=0.8):
         pt = stems(toks(phrase))
         if not pt:
             return None
+        # Some phrases mean what they mean because of a quantifier, and toks()
+        # drops those: "only one person in frame" becomes {person, frame}, which
+        # then matches a sentence asserting *two* people. The failure is not that
+        # the phrase is short -- "cheerful" is one token and matches fine -- it is
+        # that the meaning-bearing word was thrown away. Refuse those rather than
+        # guess, and say which word did it.
+        words = set(re.findall(r"[a-z]+", phrase.lower()))
+        dropped = {w for w in QUANTIFIERS & words if stem(w) not in pt}
+        if dropped:
+            print(f"  [SKIP] '{phrase}' — matching drops {sorted(dropped)}, which "
+                  f"carries the meaning; the remaining {sorted(pt)} would match "
+                  f"a sentence asserting the opposite. Split it into a finer "
+                  f"element.")
+            return None
         for s in sents:
-            if len(pt & stems(toks(s))) / len(pt) >= need:
-                return s.strip()
+            st = stems(toks(s))
+            if len(pt & st) / len(pt) < need:
+                continue
+            if negated(s, pt & st):
+                continue
+            return s.strip()
         return None
 
     print("\nG2 constraint conflict")

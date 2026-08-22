@@ -200,7 +200,9 @@ def measure(path):
                 sx = sy = 0.0
                 clamped += 1
             dx, dy = dx + sx, dy + sy
-            M = np.float32([[1, 0, dx], [0, 1, dy]])
+            # phaseCorrelate returns the content's shift; alignment must warp by
+            # its negative (as the liveliness path above already does).
+            M = np.float32([[1, 0, -dx], [0, 1, -dy]])
             al = cv2.warpAffine(G[t_], M, (w_, h_),
                                 borderMode=cv2.BORDER_REPLICATE)
             lab = cv2.cvtColor(
